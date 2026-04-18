@@ -31,6 +31,29 @@ Install globally:
 npx skills add pyaethu-aung/skills --skill commit-message --global
 ```
 
+## Git Hooks
+
+This repo ships a `commit-msg` hook in `.githooks/` that enforces the same rules as the `commit-message` skill for manual `git commit` runs.
+
+**What it checks:**
+
+- Message follows `<type>[optional scope]: <description>` (Conventional Commits)
+- Subject line ≤ 72 characters (warns at > 50)
+- No trailing period on the subject line
+- Blank line between subject and body (when a body is present)
+
+**Activate after cloning:**
+
+```bash
+git config core.hooksPath .githooks
+```
+
+This is a one-time setup per clone. The hook then runs automatically on every `git commit`.
+
+**Claude Code enforcement:**
+
+`.claude/settings.json` includes a `PreToolUse` hook that blocks Claude from running `git commit` directly and redirects it to use the `/commit-message` skill instead.
+
 ## Related Links
 
 - [Conventional Commits specification](https://www.conventionalcommits.org/)

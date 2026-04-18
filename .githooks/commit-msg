@@ -1,0 +1,67 @@
+#!/bin/bash
+# Validates Conventional Commits format (50/72 rule, type, scope, description)
+
+commit_msg_file="$1"
+
+# Strip comment lines to get actual content
+subject=$(grep -v '^#' "$commit_msg_file" | head -1)
+
+# Skip merge/revert/fixup/squash commits
+if echo "$subject" | grep -qE "^(Merge |Revert |fixup! |squash! )"; then
+  exit 0
+fi
+
+# Validate Conventional Commits format
+if ! echo "$subject" | grep -qE "^(feat|fix|chore|ci|docs|refactor|perf|test|style|build|revert)(\([^)]+\))?(!)?: .+"; then
+  echo ""
+  echo "❌  Commit rejected: message does not follow Conventional Commits format."
+  echo ""
+  echo "    Expected: <type>[optional scope]: <description>"
+  echo "    Types:    feat, fix, chore, ci, docs, refactor, perf, test, style, build, revert"
+  echo ""
+  echo "    Examples:"
+  echo "      feat(auth): add OAuth2 login flow"
+  echo "      fix: correct null pointer in user service"
+  echo "      chore(deps): bump lodash to 4.17.21"
+  echo ""
+  echo "    Your message: $subject"
+  echo ""
+  exit 1
+fi
+
+# Check subject line length
+subject_len=${#subject}
+if [ "$subject_len" -gt 72 ]; then
+  echo ""
+  echo "❌  Commit rejected: subject line is $subject_len chars (hard limit: 72)."
+  echo "    Your subject: $subject"
+  echo ""
+  exit 1
+fi
+
+if [ "$subject_len" -gt 50 ]; then
+  echo "⚠️   Subject line is $subject_len chars (recommended max: 50)."
+fi
+
+# Reject trailing period
+if echo "$subject" | grep -qE "\.$"; then
+  echo ""
+  echo "❌  Commit rejected: subject line must not end with a period."
+  echo "    Your subject: $subject"
+  echo ""
+  exit 1
+fi
+
+# Check blank line between subject and body (if body present)
+body_lines=$(grep -v '^#' "$commit_msg_file" | tail -n +2)
+if [ -n "$body_lines" ]; then
+  second_line=$(grep -v '^#' "$commit_msg_file" | sed -n '2p')
+  if [ -n "$second_line" ]; then
+    echo ""
+    echo "❌  Commit rejected: subject and body must be separated by a blank line."
+    echo ""
+    exit 1
+  fi
+fi
+
+exit 0
