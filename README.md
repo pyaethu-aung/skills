@@ -13,9 +13,19 @@ Guides Claude through every commit with structure, discipline, and consistency.
 - **[Conventional Commits](https://www.conventionalcommits.org/) format** — `<type>[optional scope]: <description>` with a full type table (`feat`, `fix`, `chore`, `ci`, `docs`, `refactor`, `perf`, `test`, `style`, `build`, `revert`) and [SemVer](https://semver.org/) impact notes
 - **Confirmation prompt** — always shows files, character count, and full message before running `git commit`
 
+### `create-pr`
+
+Guides Claude through opening a GitHub pull request with a consistent format and a confirmation step before submitting.
+
+- **Derives title and body from commits** — inspects `git log` and recent PR history to match the project's established style
+- **Structured body template** — Summary, Changes, and Test plan sections
+- **Confirmation prompt** — shows branch, commit count, title, and body before running `gh pr create`
+- **Prints the PR URL** after creation for quick access
+
 | Skill | Description |
 |---|---|
 | [`commit-message`](skills/commit-message/SKILL.md) | Enforces atomic commits, the 50/72 subject/body rule, and Conventional Commits format |
+| [`create-pr`](skills/create-pr/SKILL.md) | Derives PR title and body from commits, enforces a consistent format, and confirms before submitting |
 
 ## Installation
 
@@ -23,15 +33,19 @@ Install a specific skill into your project:
 
 ```bash
 npx skills add pyaethu-aung/skills --skill commit-message
+npx skills add pyaethu-aung/skills --skill create-pr
 ```
 
 Install globally:
 
 ```bash
 npx skills add pyaethu-aung/skills --skill commit-message --global
+npx skills add pyaethu-aung/skills --skill create-pr --global
 ```
 
-## Git Hooks
+## Claude Code Enforcement
+
+### `commit-message`
 
 This repo ships a `commit-msg` hook in `.githooks/` that enforces the same rules as the `commit-message` skill for manual `git commit` runs.
 
@@ -50,9 +64,59 @@ git config core.hooksPath .githooks
 
 This is a one-time setup per clone. The hook then runs automatically on every `git commit`.
 
-**Claude Code enforcement:**
+**Block Claude from bypassing the skill:**
 
-`.claude/settings.json` includes a `PreToolUse` hook that blocks Claude from running `git commit` directly and redirects it to use the `/commit-message` skill instead.
+Add the following to your `.claude/settings.json` to prevent Claude from running `git commit` directly and redirect it to `/commit-message` instead:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git commit*)",
+            "command": "bash .claude/hooks/git-commit-guard.sh",
+            "statusMessage": "Enforcing /commit-message skill..."
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Then copy [`git-commit-guard.sh`](.claude/hooks/git-commit-guard.sh) into your project's `.claude/hooks/` directory.
+
+### `create-pr`
+
+**Block Claude from bypassing the skill:**
+
+Add the following to your `.claude/settings.json` to prevent Claude from running `gh pr create` directly and redirect it to `/create-pr` instead:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(gh pr create*)",
+            "command": "bash .claude/hooks/gh-pr-guard.sh",
+            "statusMessage": "Enforcing /create-pr skill..."
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Then copy [`gh-pr-guard.sh`](.claude/hooks/gh-pr-guard.sh) into your project's `.claude/hooks/` directory.
 
 ## Related Links
 
