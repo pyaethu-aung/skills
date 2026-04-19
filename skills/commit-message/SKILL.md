@@ -1,7 +1,7 @@
 ---
 name: commit-message
 description: Use when creating or amending git commits. Enforces atomic commits, the 50/72 subject/body rule, and Conventional Commits format.
-allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git add:*) Bash(git commit:*)
+allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git add:*) Bash(git commit:*) Bash(echo:*) Bash(wc:*)
 ---
 
 # Commit Message Rules
@@ -21,8 +21,9 @@ git diff --staged
 If the staged diff above is empty, inspect the working tree status above:
 
 - If there are unstaged or untracked changes, infer which files belong to
-  the same logical change based on their names and paths, then stage them
-  with `git add <files>` and proceed.
+  the same logical change based on their names and paths, show the user
+  which files you intend to stage and ask them to confirm before running
+  `git add <files>`.
 - If there are no changes at all, stop and tell the user:
   "Nothing to commit — working tree is clean."
 - If the changes span multiple unrelated concerns, stage only the files
@@ -96,7 +97,7 @@ chore(deps): bump lodash from 4.17.20 to 4.17.21
 
 ### Subject line rules
 
-- Imperative mood: "add feature" not "added" or "adds"
+- Imperative mood: "add feature" not "added" (past tense) or "adds" (third-person)
 - No capital letter after the colon
 - No trailing period
 - 50 characters or fewer
@@ -167,7 +168,12 @@ Proposed message:
 Proceed? (yes / edit message / cancel)
 ```
 
-- **yes** — run `git commit -m "<message>"`
+- **yes** — run `git commit` using a heredoc to preserve line breaks:
+  ```bash
+  git commit -F - <<'EOF'
+  <full commit message>
+  EOF
+  ```
 - **edit message** — ask the user what to change, revise, and show the
   summary again
 - **cancel** — stop without committing; leave the index as-is
@@ -181,14 +187,13 @@ Simple fix (subject only):
 fix(auth): prevent session token from expiring prematurely
 ```
 
-Feature with body:
+Feature with body (note 72-char body wrap):
 ```
 feat(api): add pagination support to list endpoints
 
-Without pagination, list endpoints return all records in a single
-response. This causes memory spikes and slow response times as
-data grows. Adds cursor-based pagination with a default page size
-of 20.
+Without pagination, list endpoints return all records in a single       |
+response. This causes memory spikes and slow response times as data     |
+grows. Adds cursor-based pagination with a default page size of 20.     |
 ```
 
 Dependency bump:
