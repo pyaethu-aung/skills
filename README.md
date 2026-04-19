@@ -88,7 +88,7 @@ Add the following to your `.claude/settings.json` to prevent Claude from running
 }
 ```
 
-Then copy [`git-commit-guard.sh`](.claude/hooks/git-commit-guard.sh) into your project's `.claude/hooks/` directory.
+Then copy [`git-commit-guard.sh`](.claude/hooks/git-commit-guard.sh) into your project's `.claude/hooks/` directory. The script allows commits whose message matches Conventional Commits format (`-m` flag) and commits produced via `git commit -F` (heredoc), and blocks everything else.
 
 ### `create-pr`
 
@@ -116,7 +116,7 @@ Add the following to your `.claude/settings.json` to prevent Claude from running
 }
 ```
 
-Then copy [`gh-pr-guard.sh`](.claude/hooks/gh-pr-guard.sh) into your project's `.claude/hooks/` directory.
+Then copy [`gh-pr-guard.sh`](.claude/hooks/gh-pr-guard.sh) into your project's `.claude/hooks/` directory. The script blocks bare `gh pr create` calls but allows through calls that include both `--title` and `--body`, which are only produced by the skill after the confirmation step.
 
 ## Related Links
 
