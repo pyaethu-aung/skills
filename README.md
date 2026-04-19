@@ -27,6 +27,10 @@ Guides Claude through opening a GitHub pull request with a consistent format and
 | [`commit-message`](skills/commit-message/SKILL.md) | Enforces atomic commits, the 50/72 subject/body rule, and Conventional Commits format |
 | [`create-pr`](skills/create-pr/SKILL.md) | Derives PR title and body from commits, enforces a consistent format, and confirms before submitting |
 
+## For contributors
+
+See [CLAUDE.md](CLAUDE.md) for repo conventions, skill usage rules, and the branch workflow expected when working in this repo with Claude Code.
+
 ## Installation
 
 Install a specific skill into your project:
