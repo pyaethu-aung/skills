@@ -5,6 +5,11 @@
 input=$(cat)
 cmd=$(python3 -c "import sys, json; print(json.load(sys.stdin).get('tool_input', {}).get('command', ''))" <<< "$input" 2>/dev/null)
 
+# Allow file/stdin-based commits (git commit -F) — used by the skill for multi-line messages
+if echo "$cmd" | grep -qE 'git commit.*-F'; then
+  exit 0
+fi
+
 # Extract message from -m "..." or -m '...'
 msg=$(python3 -c "
 import sys, re
