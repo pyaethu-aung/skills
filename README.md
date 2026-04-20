@@ -68,6 +68,15 @@ git config core.hooksPath .githooks
 
 This is a one-time setup per clone. The hook then runs automatically on every `git commit`.
 
+**Verify it's wired up:**
+
+```bash
+git config --get core.hooksPath   # must print: .githooks
+ls -l .githooks/commit-msg        # must be present and executable (-rwxr-xr-x)
+```
+
+If `core.hooksPath` is empty, Git is still looking at `.git/hooks/` and will silently ignore the script. If `commit-msg` is not executable, run `chmod +x .githooks/commit-msg`.
+
 **Block Claude from bypassing the skill:**
 
 Add the following to your `.claude/settings.json` to prevent Claude from running `git commit` directly and redirect it to `/commit-message` instead:
