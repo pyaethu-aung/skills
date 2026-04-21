@@ -1,0 +1,15 @@
+name: Validate Skills
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-skills:
+    name: Validate skill format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate skill frontmatter
+        run: python3 .github/scripts/validate_skills.py
