@@ -22,10 +22,21 @@ Guides Claude through opening a GitHub pull request with a consistent format and
 - **Confirmation prompt** — shows branch, commit count, title, and body before running `gh pr create`
 - **Prints the PR URL** after creation for quick access
 
+### `postgres-scaffold`
+
+Guides Claude through implementing or updating PostgreSQL database schema.
+
+- **Goose migration files** — correctly timestamped filenames, `Up`/`Down` sections, `StatementBegin`/`StatementEnd` wrapping
+- **UUIDv7 primary keys** — uses `DEFAULT uuidv7()` on PG 17+, falls back to `pg_uuidv7` extension or Go-side `BeforeCreate` hook
+- **Schema conventions** — snake_case plural table names, standard audit columns (`created_at`, `updated_at`, `deleted_at`, `created_by`, `updated_by`), FK actions, soft-delete partial indexes
+- **Optional GORM models** — generates only when the project uses GORM; uses a custom `Base`/`AuditBase` struct instead of `gorm.Model`
+- **Confirmation prompt** — shows the full schema plan before writing any files
+
 | Skill | Description |
 |---|---|
 | [`commit-message`](skills/commit-message/SKILL.md) | Enforces atomic commits, the 50/72 subject/body rule, and Conventional Commits format |
 | [`create-pr`](skills/create-pr/SKILL.md) | Derives PR title and body from commits, enforces a consistent format, and confirms before submitting |
+| [`postgres-scaffold`](skills/postgres-scaffold/SKILL.md) | Generates goose migration files and optionally GORM model structs for PostgreSQL tables |
 
 ## For contributors
 
@@ -38,6 +49,7 @@ Install a specific skill into your project:
 ```bash
 npx skills add pyaethu-aung/skills --skill commit-message
 npx skills add pyaethu-aung/skills --skill create-pr
+npx skills add pyaethu-aung/skills --skill postgres-scaffold
 ```
 
 Install globally:
@@ -45,6 +57,7 @@ Install globally:
 ```bash
 npx skills add pyaethu-aung/skills --skill commit-message --global
 npx skills add pyaethu-aung/skills --skill create-pr --global
+npx skills add pyaethu-aung/skills --skill postgres-scaffold --global
 ```
 
 ## Claude Code Enforcement
