@@ -60,6 +60,35 @@ npx skills add pyaethu-aung/skills --skill create-pr --global
 npx skills add pyaethu-aung/skills --skill postgres-scaffold --global
 ```
 
+## CI
+
+### Skill format validation
+
+Every pull request targeting `main` runs `.github/workflows/validate-skills.yml`, which executes `.github/scripts/validate_skills.py` against every directory under `skills/`.
+
+**What it checks:**
+
+- `SKILL.md` exists in the skill directory
+- The file starts with valid YAML frontmatter (`---` delimiters)
+- `name` is present, non-empty, and matches the directory name
+- `description` is present and non-empty
+- `metadata.version` is present and follows semver (`x.y.z`)
+- The body (content after the frontmatter) is non-empty
+
+**Run locally before opening a PR:**
+
+```bash
+python3 .github/scripts/validate_skills.py
+```
+
+**To make this check required before merging**, enable branch protection on `main` in the GitHub repository settings:
+
+> Settings → Branches → Add branch protection rule → `main`
+> → ✅ Require status checks to pass before merging
+> → Search for and add: `Validate skill format`
+
+---
+
 ## Claude Code Enforcement
 
 ### `commit-message`
