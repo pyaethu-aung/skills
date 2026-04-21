@@ -22,6 +22,16 @@ Guides Claude through opening a GitHub pull request with a consistent format and
 - **Confirmation prompt** — shows branch, commit count, title, and body before running `gh pr create`
 - **Prints the PR URL** after creation for quick access
 
+### `update-readme`
+
+Guides Claude through updating or creating README.md after any change worth documenting.
+
+- **Scope detection** — inspects recent commits and diffs to determine which sections need updating
+- **Surgical edits** — touches only the affected section; never rewrites unrelated content
+- **Skip logic** — skips internal-only changes (refactors, CI tweaks, test fixes) that users wouldn't notice
+- **Creates from scratch** — generates a structured README.md if none exists
+- **Confirmation prompt** — shows affected sections and proposed changes before writing
+
 ### `postgres-scaffold`
 
 Guides Claude through implementing or updating PostgreSQL database schema.
@@ -37,6 +47,7 @@ Guides Claude through implementing or updating PostgreSQL database schema.
 | [`commit-message`](skills/commit-message/SKILL.md) | Enforces atomic commits, the 50/72 subject/body rule, and Conventional Commits format |
 | [`create-pr`](skills/create-pr/SKILL.md) | Derives PR title and body from commits, enforces a consistent format, and confirms before submitting |
 | [`postgres-scaffold`](skills/postgres-scaffold/SKILL.md) | Generates goose migration files and optionally GORM model structs for PostgreSQL tables |
+| [`update-readme`](skills/update-readme/SKILL.md) | Updates or creates README.md after changes worth documenting |
 
 ## For contributors
 
@@ -50,6 +61,7 @@ Install a specific skill into your project:
 npx skills add pyaethu-aung/skills --skill commit-message
 npx skills add pyaethu-aung/skills --skill create-pr
 npx skills add pyaethu-aung/skills --skill postgres-scaffold
+npx skills add pyaethu-aung/skills --skill update-readme
 ```
 
 Install globally:
@@ -58,6 +70,7 @@ Install globally:
 npx skills add pyaethu-aung/skills --skill commit-message --global
 npx skills add pyaethu-aung/skills --skill create-pr --global
 npx skills add pyaethu-aung/skills --skill postgres-scaffold --global
+npx skills add pyaethu-aung/skills --skill update-readme --global
 ```
 
 ## CI
