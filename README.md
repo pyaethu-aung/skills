@@ -100,6 +100,23 @@ python3 .github/scripts/validate_skills.py
 > → ✅ Require status checks to pass before merging
 > → Search for and add: `Validate skill format`
 
+### Hook script linting
+
+Every pull request that modifies `.claude/hooks/` runs `.github/workflows/lint-hooks.yml`, which executes `shellcheck` against every `.sh` file in that directory.
+
+**What it checks:**
+
+- Unsafe variable expansion (unquoted `$var`)
+- Command injection risks
+- Shell syntax errors and unreachable code
+- Portability issues
+
+**To make this check required before merging**, enable branch protection on `main` in the GitHub repository settings:
+
+> Settings → Branches → Add branch protection rule → `main`
+> → ✅ Require status checks to pass before merging
+> → Search for and add: `ShellCheck`
+
 ---
 
 ## Claude Code Enforcement
