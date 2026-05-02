@@ -3,7 +3,7 @@
 ## Repo structure
 
 - `skills/<name>/SKILL.md` — source of truth for each skill
-- `.claude/skills/<name>` — symlink to `../../skills/<name>` for local install
+- `.claude/skills/<name>` — local copy of the skill for Claude Code to use; may differ from source (e.g. extra `model` field)
 - `.claude/hooks/` — guard scripts that enforce skill usage
 - `.claude/settings.json` — PreToolUse hooks wiring the guards
 - `.githooks/commit-msg` — git hook enforcing Conventional Commits on manual commits
@@ -45,6 +45,6 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 ## Adding a new skill
 
 1. Create `skills/<name>/SKILL.md`
-2. Symlink it: `ln -s ../../skills/<name> .claude/skills/<name>`
+2. Copy it for local install: `cp -r skills/<name> .claude/skills/<name>`; add a `model` field to the local copy if needed
 3. If the skill wraps a sensitive command, add a guard hook in `.claude/hooks/` and wire it in `.claude/settings.json`
 4. Document it in `README.md`
