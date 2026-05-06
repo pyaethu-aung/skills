@@ -2,13 +2,29 @@
 name: commit-message
 description: Use when creating or amending git commits. Enforces atomic commits, the 50/72 subject/body rule, and Conventional Commits format.
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
 allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git add:*) Bash(git commit:*) Bash(echo:*) Bash(wc:*)
 ---
 
 # Commit Message Rules
 
 Follow these rules for every commit.
+
+## Arguments
+
+If the user passed a keyword or phrase when invoking this skill
+(e.g. `/commit-message fix login redirect`), treat it as a **hint**
+for the commit message subject:
+
+- Use the hint to seed the description and/or type — do not copy it
+  verbatim; still derive the final message from the diff.
+- The hint overrides inference only where it adds information the diff
+  alone does not reveal (e.g. business context, ticket wording).
+- All other rules (Conventional Commits, 50/72, atomic check) still
+  apply in full.
+
+If no argument was provided, infer the message entirely from the diff
+and commit history as usual.
 
 ## Working tree status
 ```!
