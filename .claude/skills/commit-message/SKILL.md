@@ -176,6 +176,7 @@ After the character count check, pause and show the user a summary
 before running `git commit`:
 
 ```
+Hint: "<hint text>"          ← only when the user passed an argument; omit this line if none
 Subject: "<subject line>" (N chars ✅)
 
 Files to be committed:
