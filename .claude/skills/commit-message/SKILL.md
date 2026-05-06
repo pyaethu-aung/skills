@@ -4,6 +4,7 @@ description: Use when creating or amending git commits. Enforces atomic commits,
 metadata:
   version: "1.0.1"
 model: haiku
+argument-hint: [optional hint text]
 allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git add:*) Bash(git commit:*) Bash(echo:*) Bash(wc:*)
 ---
 
