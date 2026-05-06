@@ -21,7 +21,7 @@ If the current branch is `main` or `master`, check for local commits
 not yet on the remote:
 
 ```!
-git log origin/$(git branch --show-current)..HEAD --oneline
+git log @{upstream}..HEAD --oneline
 ```
 
 If that log is **non-empty** (there are unpushed commits on main/master):
