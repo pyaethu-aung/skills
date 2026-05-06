@@ -11,6 +11,7 @@ Guides Claude through every commit with structure, discipline, and consistency.
 - **Atomic commits** — stages only files that belong to one logical change and flags unrelated concerns before committing
 - **50/72 rule** — measures subject line length with `wc -c` (never manual counting) and enforces the hard 72-character limit
 - **[Conventional Commits](https://www.conventionalcommits.org/) format** — `<type>[optional scope]: <description>` with a full type table (`feat`, `fix`, `chore`, `ci`, `docs`, `refactor`, `perf`, `test`, `style`, `build`, `revert`) and [SemVer](https://semver.org/) impact notes
+- **Argument hints** — accepts an optional keyword or phrase when invoked (e.g., `/commit-message fix login redirect`) to seed the commit type and description; all Conventional Commits and 50/72 constraints still apply
 - **Confirmation prompt** — always shows files, character count, and full message before running `git commit`
 
 ### `create-pr`
@@ -19,6 +20,7 @@ Guides Claude through opening a GitHub pull request with a consistent format and
 
 - **Derives title and body from commits** — inspects `git log` and recent PR history to match the project's established style
 - **Structured body template** — Summary, Changes, and Test plan sections
+- **Main-branch guard** — if invoked on `main` or `master` with unpushed commits, derives a semantic branch name, asks for confirmation, and creates the branch before opening the PR
 - **Confirmation prompt** — shows branch, commit count, title, and body before running `gh pr create`
 - **Prints the PR URL** after creation for quick access
 
