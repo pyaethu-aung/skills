@@ -2,7 +2,7 @@
 name: create-pr
 description: Use when creating a GitHub pull request. Derives title and body from commits, enforces a consistent PR format, and confirms before submitting.
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
 allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git branch:*) Bash(git push:*) Bash(gh pr:*) Bash(gh repo:*)
 ---
 
@@ -14,6 +14,34 @@ Follow these rules every time a pull request is created.
 ```!
 git branch --show-current
 ```
+
+## Guard: commits on main/master not pushed to remote
+
+If the current branch is `main` or `master`, check for local commits
+not yet on the remote:
+
+```!
+git log origin/$(git branch --show-current)..HEAD --oneline
+```
+
+If that log is **non-empty** (there are unpushed commits on main/master):
+
+1. Derive a semantic branch name from those commits:
+   - Use the dominant Conventional Commits type as the prefix
+     (`feat`, `fix`, `chore`, etc.)
+   - Append a short slug from the commit subjects
+     (e.g. `feat/add-pagination-support`)
+   - Kebab-case, lowercase, no special characters except `/` and `-`
+2. Show the user the proposed branch name and ask them to confirm or
+   provide an alternative before proceeding.
+3. On confirmation, create and switch to the new branch:
+   ```bash
+   git checkout -b <branch-name>
+   ```
+4. Continue with the rest of the PR creation flow from the new branch.
+
+If the current branch is already a feature branch (not main/master),
+skip this step entirely.
 
 ## Commits not yet in main
 ```!
