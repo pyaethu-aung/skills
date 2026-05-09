@@ -34,6 +34,17 @@ Guides Claude through updating or creating README.md after any change worth docu
 - **Creates from scratch** — generates a structured README.md if none exists
 - **Confirmation prompt** — shows affected sections and proposed changes before writing
 
+### `test-api`
+
+Tests API endpoints against an OpenAPI/Swagger specification.
+
+- **Auto-discovery** — searches the project for `openapi.yaml`, `openapi.yml`, `openapi.json`, `swagger.*` files when no argument is provided
+- **Optional argument** — accepts a URL or file path directly: `/test-api https://api.example.com/openapi.json`
+- **Read-only by default** — only runs `GET` and `HEAD` requests; mutating methods (`POST`, `PUT`, `PATCH`, `DELETE`) require explicit confirmation
+- **Response validation** — checks status codes, Content-Type headers, and required top-level fields against the spec schema
+- **Auth support** — prompts for Bearer token or API key when the spec declares a security scheme
+- **Pre-flight summary** — lists all endpoints to test and confirms before making any request
+
 ### `postgres-scaffold`
 
 Guides Claude through implementing or updating PostgreSQL database schema.
@@ -49,6 +60,7 @@ Guides Claude through implementing or updating PostgreSQL database schema.
 | [`commit-message`](skills/commit-message/SKILL.md) | Enforces atomic commits, the 50/72 subject/body rule, and Conventional Commits format | `haiku` |
 | [`create-pr`](skills/create-pr/SKILL.md) | Derives PR title and body from commits, enforces a consistent format, and confirms before submitting | `haiku` |
 | [`postgres-scaffold`](skills/postgres-scaffold/SKILL.md) | Generates goose migration files and optionally GORM model structs for PostgreSQL tables | `sonnet` |
+| [`test-api`](skills/test-api/SKILL.md) | Tests API endpoints against an OpenAPI/Swagger specification | `sonnet` |
 | [`update-readme`](skills/update-readme/SKILL.md) | Updates or creates README.md after changes worth documenting | `sonnet` |
 
 ## For contributors
@@ -63,6 +75,7 @@ Install a specific skill into your project:
 npx skills add pyaethu-aung/skills --skill commit-message
 npx skills add pyaethu-aung/skills --skill create-pr
 npx skills add pyaethu-aung/skills --skill postgres-scaffold
+npx skills add pyaethu-aung/skills --skill test-api
 npx skills add pyaethu-aung/skills --skill update-readme
 ```
 
@@ -72,6 +85,7 @@ Install globally:
 npx skills add pyaethu-aung/skills --skill commit-message --global
 npx skills add pyaethu-aung/skills --skill create-pr --global
 npx skills add pyaethu-aung/skills --skill postgres-scaffold --global
+npx skills add pyaethu-aung/skills --skill test-api --global
 npx skills add pyaethu-aung/skills --skill update-readme --global
 ```
 
