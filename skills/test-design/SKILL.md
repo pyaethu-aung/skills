@@ -3,7 +3,7 @@ name: test-design
 description: Use when validating that a live website matches its design system and design file. Compares design tokens, component presence, layout/spacing, visual snapshots, and usability against a design source (Pencil, Figma, exported JSON/PNG) using Playwright.
 metadata:
   version: "1.0.0"
-argument-hint: [optional website URL] [optional design source path or URL]
+argument-hint: "[optional website URL] [optional design source path or URL]"
 allowed-tools: Bash(npx playwright:*) Bash(npx --yes playwright:*) Bash(node:*) Bash(find:*) Bash(grep:*) Bash(ls:*) Bash(mkdir:*) Bash(curl:*) Bash(test:*) Bash(jq:*) Bash(lsof:*) Bash(ss:*) Bash(awk:*) Bash(sort:*) Bash(for:*) Bash(head:*) Bash(echo:*) Read Write WebFetch
 ---
 
