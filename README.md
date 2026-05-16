@@ -45,6 +45,19 @@ Tests API endpoints against an OpenAPI/Swagger specification.
 - **Auth support** — prompts for Bearer token or API key when the spec declares a security scheme
 - **Pre-flight summary** — lists all endpoints to test and confirms before making any request
 
+### `test-design`
+
+Tests a live website against its design system and design file (Pencil, Figma, or exported assets).
+
+- **Auto-discovery** — finds design-system tokens (`src/design-system/`, `tokens.json`, `tailwind.config.*`) and design files (`.pen`, Figma URL in env, `design/` exports) when no argument is provided
+- **Dev-server detection** — when no URL is passed, scans listening localhost ports with `lsof`/`ss`, keeps HTML responders, and matches them to the project's framework (Next.js → 3000, Vite → 5173, Astro → 4321, …); never auto-starts the dev server
+- **Optional arguments** — accepts any URL (localhost, staging, prod) and/or a design source: `/test-design http://localhost:3000 ./design/home.pen`
+- **Five-axis comparison** — design tokens, component presence, layout & spacing, visual screenshot diff, and usability (a11y, tap-target size, focus-visible, contrast)
+- **Playwright CLI first** — uses `npx playwright` when available; falls back to a loaded Playwright MCP server only if the CLI isn't installed
+- **Pencil MCP integration** — reads `.pen` files via `mcp__pencil__*` tools (never via `Read`/`Grep`, since `.pen` files are encrypted)
+- **Pre-flight summary** — lists routes, viewports, executor, and checks before launching a browser; confirms before any `playwright install`
+- **Two-tier output** — pass/fail summary first; offers to write a full markdown report (`test-design-report.md`) with token tables and inline screenshot diffs
+
 ### `postgres-scaffold`
 
 Guides Claude through implementing or updating PostgreSQL database schema.
@@ -61,6 +74,7 @@ Guides Claude through implementing or updating PostgreSQL database schema.
 | [`create-pr`](skills/create-pr/SKILL.md) | Derives PR title and body from commits, enforces a consistent format, and confirms before submitting | `haiku` |
 | [`postgres-scaffold`](skills/postgres-scaffold/SKILL.md) | Generates goose migration files and optionally GORM model structs for PostgreSQL tables | `sonnet` |
 | [`test-api`](skills/test-api/SKILL.md) | Tests API endpoints against an OpenAPI/Swagger specification | `sonnet` |
+| [`test-design`](skills/test-design/SKILL.md) | Tests a live website against its design system and design file via Playwright | `sonnet` |
 | [`update-readme`](skills/update-readme/SKILL.md) | Updates or creates README.md after changes worth documenting | `sonnet` |
 
 ## For contributors
@@ -76,6 +90,7 @@ npx skills add pyaethu-aung/skills --skill commit-message
 npx skills add pyaethu-aung/skills --skill create-pr
 npx skills add pyaethu-aung/skills --skill postgres-scaffold
 npx skills add pyaethu-aung/skills --skill test-api
+npx skills add pyaethu-aung/skills --skill test-design
 npx skills add pyaethu-aung/skills --skill update-readme
 ```
 
@@ -86,6 +101,7 @@ npx skills add pyaethu-aung/skills --skill commit-message --global
 npx skills add pyaethu-aung/skills --skill create-pr --global
 npx skills add pyaethu-aung/skills --skill postgres-scaffold --global
 npx skills add pyaethu-aung/skills --skill test-api --global
+npx skills add pyaethu-aung/skills --skill test-design --global
 npx skills add pyaethu-aung/skills --skill update-readme --global
 ```
 
