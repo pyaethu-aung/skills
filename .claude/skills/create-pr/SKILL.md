@@ -2,7 +2,7 @@
 name: create-pr
 description: Use when creating a GitHub pull request. Derives title and body from commits, enforces a consistent PR format, and confirms before submitting.
 metadata:
-  version: "1.0.1"
+  version: "1.0.2"
 model: haiku
 allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git branch:*) Bash(git push:*) Bash(gh pr:*) Bash(gh repo:*)
 ---
@@ -18,14 +18,20 @@ git branch --show-current
 
 ## Guard: commits on main/master not pushed to remote
 
-If the current branch is `main` or `master`, check for local commits
-not yet on the remote:
+If the current branch (shown above) is `main` or `master`, run this to
+list local commits not yet on the remote:
 
-```!
+```bash
 git log @{upstream}..HEAD --oneline
 ```
 
-If that log is **non-empty** (there are unpushed commits on main/master):
+If that command errors (no upstream configured), treat it as no
+unpushed commits and continue.
+
+If the current branch is already a feature branch, skip this command
+and the rest of this section.
+
+If the log is **non-empty** (there are unpushed commits on main/master):
 
 1. Derive a semantic branch name from those commits:
    - Use the dominant Conventional Commits type as the prefix
@@ -40,9 +46,6 @@ If that log is **non-empty** (there are unpushed commits on main/master):
    git checkout -b <branch-name>
    ```
 4. Continue with the rest of the PR creation flow from the new branch.
-
-If the current branch is already a feature branch (not main/master),
-skip this step entirely.
 
 ## Commits not yet in main
 ```!
