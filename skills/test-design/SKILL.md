@@ -2,9 +2,9 @@
 name: test-design
 description: Use when validating that a live website matches its design system and design file. Compares design tokens, component presence, layout/spacing, visual snapshots, and usability against a design source (Pencil, Figma, exported JSON/PNG) using Playwright.
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
 argument-hint: "[optional website URL] [optional design source path or URL]"
-allowed-tools: Bash(npx playwright:*) Bash(npx --yes playwright:*) Bash(node:*) Bash(find:*) Bash(grep:*) Bash(ls:*) Bash(mkdir:*) Bash(curl:*) Bash(test:*) Bash(jq:*) Bash(lsof:*) Bash(ss:*) Bash(awk:*) Bash(sort:*) Bash(for:*) Bash(head:*) Bash(echo:*) Read Write WebFetch
+allowed-tools: Bash(npx playwright*) Bash(npx --yes playwright*) Bash(node *) Bash(find *) Bash(grep*) Bash(ls*) Bash(mkdir*) Bash(curl*) Bash(test *) Bash(jq*) Bash(lsof*) Bash(ss*) Bash(awk*) Bash(sort*) Bash(for *) Bash(head*) Bash(echo*) Read Write WebFetch
 ---
 
 # Design Test Rules
@@ -99,15 +99,11 @@ The design system is the source of truth for tokens (colors, typography, spacing
 5. `tailwind.config.{js,ts,mjs,cjs}` (Tailwind themes count as a token source)
 
 ```!
-find . -maxdepth 5 -type d \
-  \( -name "design-system" -o -name "tokens" -o -name "theme" \) \
-  -not -path "*/node_modules/*" -not -path "*/.git/*" 2>/dev/null | head -10
+find . -maxdepth 5 \( -name "node_modules" -o -name ".git" \) -prune -o -type d \( -name "design-system" -o -name "tokens" -o -name "theme" \) -print 2>/dev/null | head -10
 ```
 
 ```!
-find . -maxdepth 3 -type f \
-  \( -name "tokens.json" -o -name "theme.json" -o -name "design-tokens.json" -o -name "tailwind.config.*" \) \
-  -not -path "*/node_modules/*" 2>/dev/null | head -10
+find . -maxdepth 3 -name "node_modules" -prune -o -type f \( -name "tokens.json" -o -name "theme.json" -o -name "design-tokens.json" -o -name "tailwind.config.js" -o -name "tailwind.config.ts" -o -name "tailwind.config.mjs" -o -name "tailwind.config.cjs" \) -print 2>/dev/null | head -10
 ```
 
 If multiple sources are found, list them and ask. If none, ask the user to point at one — or to skip design-system checks and run only design-file comparison.
@@ -145,7 +141,7 @@ Use it directly. Detect type by extension / URL:
 
 Try these in order and stop at the first match:
 
-1. **Pencil**: `find . -maxdepth 4 -name "*.pen" -not -path "*/node_modules/*" 2>/dev/null | head -5`
+1. **Pencil**: `find . -maxdepth 4 -name "node_modules" -prune -o -name "*.pen" -print 2>/dev/null | head -5`
 2. **Figma**: look in `.env*` and `README.md` for `FIGMA_FILE_URL`, `FIGMA_FILE_KEY`, or a `figma.com/...` link
 3. **Loaded MCP**: if the conversation has Pencil or Figma MCP tools available (e.g. `mcp__pencil__*`, `mcp__figma__*`), ask the user which document to open
 4. **Exported assets**: `find . -maxdepth 4 -type d -name "design" -o -name "designs" -o -name "mockups" 2>/dev/null | head -5`
