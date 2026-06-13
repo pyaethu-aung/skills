@@ -68,7 +68,7 @@ Guides Claude through implementing or updating PostgreSQL database schema.
 - **Optional GORM models** — generates only when the project uses GORM; uses a custom `Base`/`AuditBase` struct instead of `gorm.Model`
 - **Confirmation prompt** — shows the full schema plan before writing any files
 
-### `develop-feature`
+### `develop-web-feature`
 
 Guides Claude through building a website feature end-to-end with `/impeccable`, from shaping to an open PR.
 
@@ -81,7 +81,7 @@ Guides Claude through building a website feature end-to-end with `/impeccable`, 
 |---|---|---|
 | [`commit-message`](skills/commit-message/SKILL.md) | Enforces atomic commits, the 50/72 subject/body rule, and Conventional Commits format | `haiku` |
 | [`create-pr`](skills/create-pr/SKILL.md) | Derives PR title and body from commits, enforces a consistent format, and confirms before submitting | `haiku` |
-| [`develop-feature`](skills/develop-feature/SKILL.md) | Builds a web feature end-to-end with /impeccable: shape, build, gate, audit, critique, fix, PR | `sonnet` |
+| [`develop-web-feature`](skills/develop-web-feature/SKILL.md) | Builds a web feature end-to-end with /impeccable: shape, build, gate, audit, critique, fix, PR | `sonnet` |
 | [`postgres-scaffold`](skills/postgres-scaffold/SKILL.md) | Generates goose migration files and optionally GORM model structs for PostgreSQL tables | `sonnet` |
 | [`test-api`](skills/test-api/SKILL.md) | Tests API endpoints against an OpenAPI/Swagger specification | `sonnet` |
 | [`test-design`](skills/test-design/SKILL.md) | Tests a live website against its design system and design file via Playwright | `sonnet` |
@@ -98,7 +98,7 @@ Install a specific skill into your project:
 ```bash
 npx skills add pyaethu-aung/skills --skill commit-message
 npx skills add pyaethu-aung/skills --skill create-pr
-npx skills add pyaethu-aung/skills --skill develop-feature
+npx skills add pyaethu-aung/skills --skill develop-web-feature
 npx skills add pyaethu-aung/skills --skill postgres-scaffold
 npx skills add pyaethu-aung/skills --skill test-api
 npx skills add pyaethu-aung/skills --skill test-design
@@ -110,7 +110,7 @@ Install globally:
 ```bash
 npx skills add pyaethu-aung/skills --skill commit-message --global
 npx skills add pyaethu-aung/skills --skill create-pr --global
-npx skills add pyaethu-aung/skills --skill develop-feature --global
+npx skills add pyaethu-aung/skills --skill develop-web-feature --global
 npx skills add pyaethu-aung/skills --skill postgres-scaffold --global
 npx skills add pyaethu-aung/skills --skill test-api --global
 npx skills add pyaethu-aung/skills --skill test-design --global
