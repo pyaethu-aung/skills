@@ -1,5 +1,5 @@
 ---
-name: develop-feature
+name: develop-web-feature
 description: Develop, design, and ship a website feature end-to-end with /impeccable: shape, build, gate, audit, critique, fix, and open a PR. Portable across web projects. Use when asked to add, build, craft, or design a new feature.
 metadata:
   version: "1.0.0"
@@ -206,7 +206,7 @@ What Phase 0 surfaced in one React + Vite + Tailwind project, to show the
 - **`/commit-message`, `/create-pr` (optional):** install with
   `npx skills add pyaethu-aung/skills --skill commit-message` (and
   `--skill create-pr`), or skip them to use Phase 6's direct fallback.
-- **This skill:** `npx skills add pyaethu-aung/skills --skill develop-feature`
+- **This skill:** `npx skills add pyaethu-aung/skills --skill develop-web-feature`
   (add `--global` to install it for every project).
 
 ## What this skill is not
