@@ -68,10 +68,20 @@ Guides Claude through implementing or updating PostgreSQL database schema.
 - **Optional GORM models** — generates only when the project uses GORM; uses a custom `Base`/`AuditBase` struct instead of `gorm.Model`
 - **Confirmation prompt** — shows the full schema plan before writing any files
 
+### `develop-feature`
+
+Guides Claude through building a website feature end-to-end with `/impeccable`, from shaping to an open PR.
+
+- **Full design loop:** shape, build, gate, audit, critique, fix, commit, PR, iterating `/impeccable audit` and `/impeccable critique` until the score plateaus
+- **Project discovery first:** a setup phase reads `CLAUDE.md` / `AGENTS.md` and config to find the gates, feature pattern, enforcement, and design system before any code is written
+- **Dependency handling:** installs the required `/impeccable` via `npx impeccable skills install`; treats `/commit-message` and `/create-pr` as optional, with a direct commit/PR fallback when they are absent
+- **Portable:** project specifics live in the discovery phase, so the same skill works across web projects (a worked example is included as illustration only)
+
 | Skill | Description | Recommended model |
 |---|---|---|
 | [`commit-message`](skills/commit-message/SKILL.md) | Enforces atomic commits, the 50/72 subject/body rule, and Conventional Commits format | `haiku` |
 | [`create-pr`](skills/create-pr/SKILL.md) | Derives PR title and body from commits, enforces a consistent format, and confirms before submitting | `haiku` |
+| [`develop-feature`](skills/develop-feature/SKILL.md) | Builds a web feature end-to-end with /impeccable: shape, build, gate, audit, critique, fix, PR | `sonnet` |
 | [`postgres-scaffold`](skills/postgres-scaffold/SKILL.md) | Generates goose migration files and optionally GORM model structs for PostgreSQL tables | `sonnet` |
 | [`test-api`](skills/test-api/SKILL.md) | Tests API endpoints against an OpenAPI/Swagger specification | `sonnet` |
 | [`test-design`](skills/test-design/SKILL.md) | Tests a live website against its design system and design file via Playwright | `sonnet` |
@@ -88,6 +98,7 @@ Install a specific skill into your project:
 ```bash
 npx skills add pyaethu-aung/skills --skill commit-message
 npx skills add pyaethu-aung/skills --skill create-pr
+npx skills add pyaethu-aung/skills --skill develop-feature
 npx skills add pyaethu-aung/skills --skill postgres-scaffold
 npx skills add pyaethu-aung/skills --skill test-api
 npx skills add pyaethu-aung/skills --skill test-design
@@ -99,6 +110,7 @@ Install globally:
 ```bash
 npx skills add pyaethu-aung/skills --skill commit-message --global
 npx skills add pyaethu-aung/skills --skill create-pr --global
+npx skills add pyaethu-aung/skills --skill develop-feature --global
 npx skills add pyaethu-aung/skills --skill postgres-scaffold --global
 npx skills add pyaethu-aung/skills --skill test-api --global
 npx skills add pyaethu-aung/skills --skill test-design --global
