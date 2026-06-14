@@ -2,7 +2,7 @@
 name: develop-web-feature
 description: Develop, design, and ship a website feature end-to-end with /impeccable: shape, build, gate, audit, critique, fix, and open a PR. Portable across web projects. Use when asked to add, build, craft, or design a new feature.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 argument-hint: "The feature to build (e.g. 'Calendar event content type')"
 allowed-tools: Bash(npm*) Bash(npx*) Bash(node*) Bash(git:*) Bash(gh:*) Bash(grep*) Bash(ls*) Bash(cat*) Read Write Edit
 ---
@@ -53,6 +53,17 @@ the same conventions inlined there.
 
 ### Learn this project (do not skip)
 
+**First, check for a cached baseline.** This skill caches its Phase 0 findings
+per project in your OS user cache directory — `$XDG_CACHE_HOME/develop-web-feature/`
+(falling back to `$HOME/.cache/develop-web-feature/`) on Linux, or
+`$HOME/Library/Caches/develop-web-feature/` on macOS — under a filename keyed to
+this repo's absolute path. If that file exists, read it and trust it: skip the
+discovery below, re-deriving only the entries whose source has changed. One
+thing is never cached — the **green baseline**: always re-run the gates once on
+a clean tree, because it is a live fact (dependency or coverage drift), not a
+static answer. If there is no cache file, discover everything from scratch and
+write it at the end of this phase (see "Cache the baseline").
+
 Before building, find this project's answers. Most live in `CLAUDE.md` /
 `AGENTS.md`, `README`, `package.json` scripts, the lint config, and
 `.claude/settings.json`. Establish:
@@ -73,6 +84,26 @@ Before building, find this project's answers. Most live in `CLAUDE.md` /
   so you do not chase noise.
 
 If any of these is ambiguous, ask rather than guess.
+
+### Cache the baseline
+
+Write what you found to the OS user cache so the next run skips rediscovery:
+
+```bash
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/develop-web-feature"   # macOS: "$HOME/Library/Caches/develop-web-feature"
+mkdir -p "$CACHE_DIR"
+KEY="$(basename "$PWD")-$(printf '%s' "$PWD" | shasum | cut -c1-8)"   # repo name + path hash, collision-safe
+# write the findings to "$CACHE_DIR/$KEY.md"
+```
+
+It lives outside the repo on purpose: a regenerable cache, never committed, no
+`.gitignore` entry needed. Record the five findings above plus the date you
+captured them, and keep it terse — a cheat sheet, not documentation. Treat an
+entry as stale and re-derive it when its source moves: the gates when
+`package.json` scripts or the lint config change; the feature pattern when a
+newer comparable feature lands. The gate run itself is never cached — confirm
+green on a clean tree every time. The "Worked example" below shows the shape of
+a filled-in baseline.
 
 ## Phase 1: Shape before building
 
