@@ -74,6 +74,7 @@ Guides Claude through building a website feature end-to-end with `/impeccable`, 
 
 - **Full design loop:** shape, build, gate, audit, critique, fix, commit, PR, iterating `/impeccable audit` and `/impeccable critique` until the score plateaus
 - **Project discovery first:** a setup phase reads `CLAUDE.md` / `AGENTS.md` and config to find the gates, feature pattern, enforcement, and design system before any code is written
+- **Cached discovery:** caches the discovery phase's findings to your OS user cache (keyed per repo) and skips rediscovery on later runs, re-deriving only entries whose source changed; the green-baseline gate run always repeats on a clean tree
 - **Dependency handling:** installs the required `/impeccable` via `npx impeccable skills install`; treats `/commit-message` and `/create-pr` as optional, with a direct commit/PR fallback when they are absent
 - **Portable:** project specifics live in the discovery phase, so the same skill works across web projects (a worked example is included as illustration only)
 
