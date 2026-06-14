@@ -24,6 +24,41 @@ Always use this skill when opening a pull request. Never run `gh pr create` dire
 - Derives title and body from commits, confirms before submitting
 - A `PreToolUse` hook blocks bare `gh pr create` calls and redirects here
 
+### `/update-readme`
+
+Use after any change worth documenting — new feature, new skill, config change, or breaking change.
+
+- Updates `README.md` to reflect the change, or creates it if missing
+- Inspects recent commits and the working tree to determine what to document
+
+### `/postgres-scaffold`
+
+Use when implementing or updating database schema.
+
+- Generates goose migration files and optionally GORM model structs for PostgreSQL tables
+- Discovers existing migration layout before generating anything
+
+### `/test-api`
+
+Use when testing API endpoints against an OpenAPI/Swagger specification.
+
+- Accepts an optional OpenAPI doc URL or file path as an argument
+- Discovers or loads the spec, executes requests, and validates responses
+
+### `/test-design`
+
+Use when validating that a live website matches its design system and design file.
+
+- Accepts an optional website URL and design source (Pencil, Figma, `tokens.json`, PNG exports)
+- Compares design tokens, component presence, layout/spacing, and visual snapshots using Playwright
+
+### `/develop-web-feature`
+
+Use when adding, building, or designing a new web feature end-to-end.
+
+- Accepts a feature description as an argument (e.g. `Calendar event content type`)
+- Runs the full loop: shape → build → gate → audit → critique → fix → commit → PR
+
 ## Commit conventions
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
