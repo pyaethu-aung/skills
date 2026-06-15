@@ -1,6 +1,6 @@
 ---
 name: develop-web-feature
-description: Develop, design, and ship a website feature end-to-end with /impeccable: shape, build, gate, audit, critique, fix, and open a PR. Portable across web projects. Use when asked to add, build, craft, or design a new feature.
+description: "Develop, design, and ship a website feature end-to-end with /impeccable: shape, build, gate, audit, critique, fix, and open a PR. Portable across web projects. Use when asked to add, build, craft, or design a new feature."
 metadata:
   version: "1.1.0"
 argument-hint: "The feature to build (e.g. 'Calendar event content type')"
