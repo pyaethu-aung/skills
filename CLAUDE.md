@@ -56,8 +56,9 @@ Use when validating that a live website matches its design system and design fil
 
 Use when adding, building, or designing a new web feature end-to-end.
 
-- Accepts a feature description as an argument (e.g. `Calendar event content type`)
-- Runs the full loop: shape → build → gate → audit → critique → fix → commit → PR
+- Accepts `[--auto]` and a feature description as arguments (e.g. `Calendar event content type`)
+- Runs the full loop: shape → build → gate → audit → critique → fix → commit → document → PR, then merge → version-bump → release
+- `--auto` (or "autonomous"/"hands-off" in the request) collapses in-flow confirmations into a single review at the PR; the human gates (PR merge, release publish) still require explicit sign-off
 
 ## Commit conventions
 

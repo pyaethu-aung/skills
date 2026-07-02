@@ -70,11 +70,14 @@ Guides Claude through implementing or updating PostgreSQL database schema.
 
 ### `develop-web-feature`
 
-Guides Claude through building a website feature end-to-end with `/impeccable`, from shaping to an open PR.
+Guides Claude through building a website feature end-to-end with `/impeccable`, from idea to a published release.
 
-- **Full design loop:** shape, build, gate, audit, critique, fix, commit, PR, iterating `/impeccable audit` and `/impeccable critique` until the score plateaus
+- **Full lifecycle loop:** shape, build, write e2e specs, gate, audit, critique, fix, commit, document, PR — then merge, version-bump, tag, and release — iterating `/impeccable audit` and `/impeccable critique` until the score plateaus
+- **Autonomous `--auto` mode:** collapses in-flow confirmations (scope, critique's hand-back) into a single review at the PR, using `critique-plan.mjs` to keep the fix loop converging non-interactively; still stops for the human gates (PR merge, release publish)
+- **Phase 0 permissions setup:** `setup.mjs` wires up every required allow entry in `.claude/settings.local.json`, previewing the delta before writing so a skill update can never widen permissions silently
 - **Project discovery first:** a setup phase reads `CLAUDE.md` / `AGENTS.md` and config to find the gates, feature pattern, enforcement, and design system before any code is written
 - **Cached discovery:** caches the discovery phase's findings to your OS user cache (keyed per repo) and skips rediscovery on later runs, re-deriving only entries whose source changed; the green-baseline gate run always repeats on a clean tree
+- **Seven helper scripts:** `setup.mjs`, `discover.mjs`, `gates.mjs`, `dev-server.mjs`, `critique-plan.mjs`, `cache-check.mjs`, `cache-write.mjs` — drive permissions, discovery, gating, the dev server, and autonomous convergence without raw shell commands
 - **Dependency handling:** installs the required `/impeccable` via `npx impeccable skills install`; treats `/commit-message` and `/create-pr` as optional, with a direct commit/PR fallback when they are absent
 - **Portable:** project specifics live in the discovery phase, so the same skill works across web projects (a worked example is included as illustration only)
 
@@ -82,7 +85,7 @@ Guides Claude through building a website feature end-to-end with `/impeccable`, 
 |---|---|---|
 | [`commit-message`](skills/commit-message/SKILL.md) | Enforces atomic commits, the 50/72 subject/body rule, and Conventional Commits format | `haiku` |
 | [`create-pr`](skills/create-pr/SKILL.md) | Derives PR title and body from commits, enforces a consistent format, and confirms before submitting | `haiku` |
-| [`develop-web-feature`](skills/develop-web-feature/SKILL.md) | Builds a web feature end-to-end with /impeccable: shape, build, gate, audit, critique, fix, PR | `sonnet` |
+| [`develop-web-feature`](skills/develop-web-feature/SKILL.md) | Builds a web feature end-to-end with /impeccable: shape, build, gate, audit, critique, fix, PR, release | `opus` |
 | [`postgres-scaffold`](skills/postgres-scaffold/SKILL.md) | Generates goose migration files and optionally GORM model structs for PostgreSQL tables | `sonnet` |
 | [`test-api`](skills/test-api/SKILL.md) | Tests API endpoints against an OpenAPI/Swagger specification | `sonnet` |
 | [`test-design`](skills/test-design/SKILL.md) | Tests a live website against its design system and design file via Playwright | `sonnet` |
