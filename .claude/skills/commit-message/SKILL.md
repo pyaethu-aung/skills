@@ -2,31 +2,15 @@
 name: commit-message
 description: Use when creating or amending git commits. Enforces atomic commits, the 50/72 subject/body rule, and Conventional Commits format.
 metadata:
-  version: "1.0.1"
+  version: "1.1.0"
 model: haiku
-argument-hint: [optional hint text]
-allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git add:*) Bash(git commit:*) Bash(echo:*) Bash(wc:*)
+argument-hint: "[--yes] (skip the confirmation prompt for hands-off runs)"
+allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git add:*) Bash(CLAUDE_COMMIT_VIA_SKILL=1 git commit:*) Bash(echo:*) Bash(wc:*)
 ---
 
 # Commit Message Rules
 
 Follow these rules for every commit.
-
-## Arguments
-
-If the user passed a keyword or phrase when invoking this skill
-(e.g. `/commit-message fix login redirect`), treat it as a **hint**
-for the commit message subject:
-
-- Use the hint to seed the description and/or type — do not copy it
-  verbatim; still derive the final message from the diff.
-- The hint overrides inference only where it adds information the diff
-  alone does not reveal (e.g. business context, ticket wording).
-- All other rules (Conventional Commits, 50/72, atomic check) still
-  apply in full.
-
-If no argument was provided, infer the message entirely from the diff
-and commit history as usual.
 
 ## Working tree status
 ```!
@@ -174,10 +158,10 @@ Do not skip this step. The count must appear in every confirmation.
 ## 5. Confirmation Before Commit
 
 After the character count check, pause and show the user a summary
-before running `git commit`:
+before running `git commit` (skip the pause if `--yes` was passed; see the
+autonomous-mode note below):
 
 ```
-Hint: "<hint text>"          ← only when the user passed an argument; omit this line if none
 Subject: "<subject line>" (N chars ✅)
 
 Files to be committed:
@@ -189,17 +173,24 @@ Proposed message:
 Proceed? (yes / edit message / cancel)
 ```
 
-- **yes** — run `git commit` using a heredoc to preserve line breaks:
+- **yes**: run the commit with the skill token the PreToolUse guard requires,
+  using a heredoc to preserve line breaks:
   ```bash
-  git commit -F - <<'EOF'
+  CLAUDE_COMMIT_VIA_SKILL=1 git commit -F - <<'EOF'
   <full commit message>
   EOF
   ```
-- **edit message** — ask the user what to change, revise, and show the
+- **edit message**: ask the user what to change, revise, and show the
   summary again
-- **cancel** — stop without committing; leave the index as-is
+- **cancel**: stop without committing; leave the index as-is
 
-Do not run `git commit` until the user explicitly confirms.
+Do not run `git commit` until the user explicitly confirms, unless `--yes` was
+passed.
+
+**Autonomous mode (`--yes`).** Skip the confirmation prompt: still run the
+section 4 character-count check and enforce its limits, then commit directly
+with the token. This is for hands-off runs where a human reviews the commits
+later (for example in the PR); do not pass `--yes` for one-off commits.
 
 ## Examples
 
