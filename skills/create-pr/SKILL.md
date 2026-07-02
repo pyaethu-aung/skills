@@ -2,8 +2,10 @@
 name: create-pr
 description: Use when creating a GitHub pull request. Derives title and body from commits, enforces a consistent PR format, and confirms before submitting.
 metadata:
-  version: "1.0.2"
-allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git branch:*) Bash(git push:*) Bash(gh pr:*) Bash(gh repo:*)
+  version: "1.1.0"
+model: haiku
+argument-hint: "[--yes] (skip the confirmation prompt for hands-off runs)"
+allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git branch:*) Bash(git push:*) Bash(gh pr:*) Bash(CLAUDE_PR_VIA_SKILL=1 gh pr create:*) Bash(gh repo:*)
 ---
 
 # PR Creation Rules
@@ -104,7 +106,8 @@ Use this template:
 
 ## 3. Confirmation Before Submitting
 
-After drafting the title and body, pause and show the user:
+After drafting the title and body, pause and show the user (skip the pause if
+`--yes` was passed; see the autonomous-mode note below):
 
 ```
 Branch:  <branch name>  →  main
@@ -119,12 +122,17 @@ Body:
 Proceed? (yes / edit / cancel)
 ```
 
-- **yes** — push the branch if not already pushed, then run
-  `gh pr create --title "<title>" --body "<body>" --base main`
-- **edit** — ask what to change, revise, and show the summary again
-- **cancel** — stop without creating the PR
+- **yes**: push the branch if not already pushed, then run
+  `CLAUDE_PR_VIA_SKILL=1 gh pr create --title "<title>" --body "<body>" --base main`
+- **edit**: ask what to change, revise, and show the summary again
+- **cancel**: stop without creating the PR
 
-Do not run `gh pr create` until the user explicitly confirms.
+Do not run `gh pr create` until the user explicitly confirms, unless `--yes`
+was passed.
+
+**Autonomous mode (`--yes`).** Skip the confirmation prompt and open the PR
+directly, with the same format and skill token. This is for hands-off runs
+where a human reviews the opened PR; do not pass `--yes` for one-off PRs.
 
 ## 4. After Creation
 
