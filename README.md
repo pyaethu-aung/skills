@@ -11,8 +11,8 @@ Guides Claude through every commit with structure, discipline, and consistency.
 - **Atomic commits** — stages only files that belong to one logical change and flags unrelated concerns before committing
 - **50/72 rule** — measures subject line length with `wc -c` (never manual counting) and enforces the hard 72-character limit
 - **[Conventional Commits](https://www.conventionalcommits.org/) format** — `<type>[optional scope]: <description>` with a full type table (`feat`, `fix`, `chore`, `ci`, `docs`, `refactor`, `perf`, `test`, `style`, `build`, `revert`) and [SemVer](https://semver.org/) impact notes
-- **Argument hints** — accepts an optional keyword or phrase when invoked (e.g., `/commit-message fix login redirect`) to seed the commit type and description; all Conventional Commits and 50/72 constraints still apply
-- **Confirmation prompt** — always shows files, character count, and full message before running `git commit`
+- **Autonomous `--yes` mode** — skips the confirmation prompt for hands-off runs; the 50/72 character-count check still applies, and a human reviews the resulting commits later (e.g. in the PR)
+- **Confirmation prompt** — shows files, character count, and full message before running `git commit` (skipped in `--yes` mode)
 
 ### `create-pr`
 

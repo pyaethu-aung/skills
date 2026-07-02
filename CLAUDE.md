@@ -16,6 +16,7 @@ Always use this skill when committing. Never run `git commit` directly.
 
 - Enforces atomic commits, Conventional Commits format, and the 50/72 rule
 - A `PreToolUse` hook blocks direct `git commit` calls and redirects here
+- `--yes` skips the confirmation prompt for hands-off runs; the character-count check still applies
 
 ### `/create-pr`
 
