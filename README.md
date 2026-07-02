@@ -22,6 +22,7 @@ Guides Claude through opening a GitHub pull request with a consistent format and
 - **Structured body template** — Summary, Changes, and Test plan sections
 - **Main-branch guard** — if invoked on `main` or `master` with unpushed commits, derives a semantic branch name, asks for confirmation, and creates the branch before opening the PR
 - **Confirmation prompt** — shows branch, commit count, title, and body before running `gh pr create`
+- **Autonomous `--yes` mode** — skips the confirmation prompt for hands-off runs; a human still reviews the opened PR
 - **Prints the PR URL** after creation for quick access
 
 ### `update-readme`
