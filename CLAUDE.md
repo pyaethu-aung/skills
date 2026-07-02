@@ -15,15 +15,15 @@
 Always use this skill when committing. Never run `git commit` directly.
 
 - Enforces atomic commits, Conventional Commits format, and the 50/72 rule
-- A `PreToolUse` hook blocks direct `git commit` calls and redirects here
 - `--yes` skips the confirmation prompt for hands-off runs; the character-count check still applies
+- A `PreToolUse` hard gate denies any `git commit` lacking the `CLAUDE_COMMIT_VIA_SKILL=1` token, which only this skill sets, and redirects here
 
 ### `/create-pr`
 
 Always use this skill when opening a pull request. Never run `gh pr create` directly.
 
 - Derives title and body from commits, confirms before submitting
-- A `PreToolUse` hook blocks bare `gh pr create` calls and redirects here
+- A `PreToolUse` hard gate denies any `gh pr create` lacking the `CLAUDE_PR_VIA_SKILL=1` token, which only this skill sets, and redirects here
 
 ### `/update-readme`
 

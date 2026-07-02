@@ -210,7 +210,6 @@ Add the following to your `.claude/settings.json` to prevent Claude from running
         "hooks": [
           {
             "type": "command",
-            "if": "Bash(git commit*)",
             "command": "bash .claude/hooks/git-commit-guard.sh",
             "statusMessage": "Enforcing /commit-message skill..."
           }
@@ -221,7 +220,7 @@ Add the following to your `.claude/settings.json` to prevent Claude from running
 }
 ```
 
-Then copy [`git-commit-guard.sh`](.claude/hooks/git-commit-guard.sh) into your project's `.claude/hooks/` directory. The script allows commits whose message matches Conventional Commits format (`-m` flag) and commits produced via `git commit -F` (heredoc), and blocks everything else.
+Then copy [`git-commit-guard.sh`](.claude/hooks/git-commit-guard.sh) into your project's `.claude/hooks/` directory. It's a hard gate: it structurally parses every Bash command (tokenizing each `&&`/`;`/`|`-separated segment, skipping env-var prefixes and git global options) to find a `git commit` invocation, and denies it unless the command carries the `CLAUDE_COMMIT_VIA_SKILL=1` token — which only the `/commit-message` skill sets when it runs the confirmed commit. There's no `--title`/`--body`-style flag exemption, so it can't be bypassed by simply shaping the flags. Note there's no `"if"` filter on the hook entry — the script does its own fast-path filtering internally, which is what lets it catch the sentinel-prefixed command too.
 
 ### `create-pr`
 
@@ -238,7 +237,6 @@ Add the following to your `.claude/settings.json` to prevent Claude from running
         "hooks": [
           {
             "type": "command",
-            "if": "Bash(gh pr create*)",
             "command": "bash .claude/hooks/gh-pr-guard.sh",
             "statusMessage": "Enforcing /create-pr skill..."
           }
@@ -249,7 +247,7 @@ Add the following to your `.claude/settings.json` to prevent Claude from running
 }
 ```
 
-Then copy [`gh-pr-guard.sh`](.claude/hooks/gh-pr-guard.sh) into your project's `.claude/hooks/` directory. The script blocks bare `gh pr create` calls but allows through calls that include both `--title` and `--body`, which are only produced by the skill after the confirmation step.
+Then copy [`gh-pr-guard.sh`](.claude/hooks/gh-pr-guard.sh) into your project's `.claude/hooks/` directory. Like the commit guard, it's a hard gate: it structurally locates any `gh pr create` invocation in the command (including inside `&&`/`;`/`|` chains) and denies it unless the command carries the `CLAUDE_PR_VIA_SKILL=1` token, which only the `/create-pr` skill sets after the user confirms.
 
 ## Related Links
 
