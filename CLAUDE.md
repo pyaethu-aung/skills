@@ -23,6 +23,7 @@ Always use this skill when committing. Never run `git commit` directly.
 Always use this skill when opening a pull request. Never run `gh pr create` directly.
 
 - Derives title and body from commits, confirms before submitting
+- Accepts `[--yes]` to skip the confirmation prompt for hands-off runs; do not pass it for one-off PRs
 - A `PreToolUse` hard gate denies any `gh pr create` lacking the `CLAUDE_PR_VIA_SKILL=1` token, which only this skill sets, and redirects here
 
 ### `/update-readme`
