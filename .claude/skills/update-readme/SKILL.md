@@ -21,8 +21,16 @@ git log --oneline -10
 ```
 
 ```!
-git diff HEAD~1 HEAD --stat
+git status --short
 ```
+
+```!
+git diff HEAD~1 HEAD --stat 2>/dev/null || echo "(no parent commit to diff against)"
+```
+
+If the change being documented spans more than the last commit (or is
+still uncommitted, per the status above), widen the diff yourself,
+e.g. `git diff HEAD~3 HEAD --stat` or `git diff --stat`.
 
 ---
 
