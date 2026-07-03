@@ -4,34 +4,40 @@ description: Use when creating a GitHub pull request. Derives title and body fro
 metadata:
   version: "1.1.0"
 argument-hint: "[--yes] (skip the confirmation prompt for hands-off runs)"
-allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git branch:*) Bash(git push:*) Bash(gh pr:*) Bash(CLAUDE_PR_VIA_SKILL=1 gh pr create:*) Bash(gh repo:*)
+allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git branch:*) Bash(git checkout:*) Bash(git push:*) Bash(gh pr:*) Bash(CLAUDE_PR_VIA_SKILL=1 gh pr create:*) Bash(gh repo:*)
 ---
 
 # PR Creation Rules
 
 Follow these rules every time a pull request is created.
 
+## Default branch
+```!
+gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'
+```
+
+The branch shown above is referred to as `<default>` in the rest of
+this skill. If the command failed (offline, no gh auth), fall back to
+`main`.
+
 ## Current branch
 ```!
 git branch --show-current
 ```
 
-## Guard: commits on main/master not pushed to remote
-
-If the current branch (shown above) is `main` or `master`, run this to
-list local commits not yet on the remote:
-
-```bash
-git log @{upstream}..HEAD --oneline
+## Commits not yet on origin's default branch
+```!
+git log origin/$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name')..HEAD --oneline
 ```
 
-If that command errors (no upstream configured), treat it as no
-unpushed commits and continue.
+If the log above is empty, stop and tell the user:
+"No commits ahead of origin/<default>. Nothing to open a PR for."
 
-If the current branch is already a feature branch, skip this command
-and the rest of this section.
+## Guard: sitting on the default branch
 
-If the log is **non-empty** (there are unpushed commits on main/master):
+If the current branch (shown above) **is** `<default>` and the commit
+list above is non-empty, the commits were made directly on the default
+branch. Move them to a feature branch before continuing:
 
 1. Derive a semantic branch name from those commits:
    - Use the dominant Conventional Commits type as the prefix
@@ -45,19 +51,20 @@ If the log is **non-empty** (there are unpushed commits on main/master):
    ```bash
    git checkout -b <branch-name>
    ```
-4. Continue with the rest of the PR creation flow from the new branch.
+4. Point the local default branch back at the remote so it no longer
+   carries the commits:
+   ```bash
+   git branch -f <default> origin/<default>
+   ```
+5. Continue with the rest of the PR creation flow from the new branch.
+   The commit list above still applies: it was measured against
+   `origin/<default>`, which the new branch is still ahead of.
 
-## Commits not yet in main
-```!
-git log main..HEAD --oneline
-```
-
-If the log above is empty, stop and tell the user:
-"No commits ahead of main. Nothing to open a PR for."
+If the current branch is already a feature branch, skip this section.
 
 ## Diff summary
 ```!
-git diff main..HEAD --stat
+git diff origin/$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name')..HEAD --stat
 ```
 
 ## Recent PRs for style reference
@@ -109,7 +116,7 @@ After drafting the title and body, pause and show the user (skip the pause if
 `--yes` was passed; see the autonomous-mode note below):
 
 ```
-Branch:  <branch name>  →  main
+Branch:  <branch name>  →  <default>
 Commits: <count> commit(s)
 
 Title:
@@ -122,7 +129,7 @@ Proceed? (yes / edit / cancel)
 ```
 
 - **yes**: push the branch if not already pushed, then run
-  `CLAUDE_PR_VIA_SKILL=1 gh pr create --title "<title>" --body "<body>" --base main`
+  `CLAUDE_PR_VIA_SKILL=1 gh pr create --title "<title>" --body "<body>" --base <default>`
 - **edit**: ask what to change, revise, and show the summary again
 - **cancel**: stop without creating the PR
 
