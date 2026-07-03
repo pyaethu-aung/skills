@@ -26,7 +26,8 @@ If the staged diff above is empty, inspect the working tree status above:
 - If there are unstaged or untracked changes, infer which files belong to
   the same logical change based on their names and paths, show the user
   which files you intend to stage and ask them to confirm before running
-  `git add <files>`.
+  `git add <files>`. If `--yes` was passed, skip the confirmation:
+  stage the files and report what you staged.
 - If there are no changes at all, stop and tell the user:
   "Nothing to commit — working tree is clean." (Exception: if the user
   asked to amend, a clean tree is fine — see the amend section below.)
@@ -171,9 +172,13 @@ Subject: "<subject line>" (N chars ✅ / ⚠️ / ❌)
 Rules:
 - **≤ 50 chars** → ✅ proceed
 - **51–72 chars** → ⚠️ warn the user and ask if they want to shorten
-  before proceeding
+  before proceeding; with `--yes`, rewrite the subject to 50
+  characters or fewer yourself, re-measure, and proceed
 - **> 72 chars** → ❌ revise the subject line before showing the
   confirmation prompt; never propose a message that exceeds 72 chars
+
+The 50-character target applies to the subject line only; body lines
+wrap at 72 (see section 2).
 
 Do not skip this step. The count must appear in every confirmation.
 
