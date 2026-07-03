@@ -1,0 +1,12 @@
+{
+  "name": "web-dev",
+  "displayName": "Web Dev",
+  "version": "1.0.0",
+  "description": "End-to-end web feature development with /impeccable: the /develop-web-feature workflow skill and its /update-readme companion",
+  "author": {
+    "name": "Pyae Thu Aung"
+  },
+  "repository": "https://github.com/pyaethu-aung/skills",
+  "license": "MIT",
+  "keywords": ["web", "workflow", "impeccable", "documentation"]
+}

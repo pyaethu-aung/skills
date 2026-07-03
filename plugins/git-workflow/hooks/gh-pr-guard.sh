@@ -1,0 +1,1 @@
+../../../.claude/hooks/gh-pr-guard.sh
