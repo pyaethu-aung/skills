@@ -4,6 +4,7 @@ description: Use after any change worth documenting — new feature, new skill, 
 metadata:
   version: "1.0.0"
 model: sonnet
+argument-hint: "[--yes] (skip the confirmation prompt for hands-off runs)"
 allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(ls:*) Glob Read Write Edit
 ---
 
@@ -88,7 +89,8 @@ Use this structure as a starting point — adapt to what the project actually co
 
 ## 5. Confirm before writing
 
-After drafting the changes, show the user a summary:
+After drafting the changes, show the user a summary (skip the pause if
+`--yes` was passed; see the autonomous-mode note below):
 
 ```
 Action:   update / create
@@ -105,4 +107,10 @@ Proceed? (yes / edit / cancel)
 - **edit** — ask what to change, revise, and show the summary again
 - **cancel** — stop without writing anything
 
-Do not write any files until the user explicitly confirms.
+Do not write any files until the user explicitly confirms, unless
+`--yes` was passed.
+
+**Autonomous mode (`--yes`).** Skip the confirmation prompt and write the
+changes directly; sections 1–4 still apply in full. This is for hands-off
+runs where a human reviews the result later (for example in the PR); do
+not pass `--yes` for one-off updates.
