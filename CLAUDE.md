@@ -12,10 +12,11 @@
 
 ### `/commit-message`
 
-Always use this skill when committing. Never run `git commit` directly.
+Always use this skill when committing or amending. Never run `git commit` directly.
 
 - Enforces atomic commits, Conventional Commits format, and the 50/72 rule
-- `--yes` skips the confirmation prompt for hands-off runs; the character-count check still applies
+- Handles amends (message-only amends allowed on a clean tree; warns before rewriting pushed history) and warns when committing directly on `main`/`master`
+- `--yes` skips the confirmation prompts (staging and commit) for hands-off runs; the character-count check still applies, and 51–72 char subjects are auto-shortened to ≤ 50
 - A `PreToolUse` hard gate denies any `git commit` lacking the `CLAUDE_COMMIT_VIA_SKILL=1` token, which only this skill sets, and redirects here
 
 ### `/create-pr`
@@ -23,7 +24,8 @@ Always use this skill when committing. Never run `git commit` directly.
 Always use this skill when opening a pull request. Never run `gh pr create` directly.
 
 - Derives title and body from commits, confirms before submitting
-- Accepts `[--yes]` to skip the confirmation prompt for hands-off runs; do not pass it for one-off PRs
+- Detects the repo's default branch via `gh repo view`; if invoked on it with unpushed commits, moves them to a feature branch and resets the local default branch to the remote
+- Accepts `[--yes]` to skip the confirmation prompts (branch name and submission) for hands-off runs; do not pass it for one-off PRs
 - A `PreToolUse` hard gate denies any `gh pr create` lacking the `CLAUDE_PR_VIA_SKILL=1` token, which only this skill sets, and redirects here
 
 ### `/update-readme`
@@ -32,6 +34,7 @@ Use after any change worth documenting — new feature, new skill, config change
 
 - Updates `README.md` to reflect the change, or creates it if missing
 - Inspects recent commits and the working tree to determine what to document
+- Accepts `[--yes]` to skip the confirmation prompt for hands-off runs; do not pass it for one-off updates
 
 ### `/postgres-scaffold`
 

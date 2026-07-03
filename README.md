@@ -9,31 +9,34 @@ A collection of AI agent skills installable via [`npx skills`](https://github.co
 Guides Claude through every commit with structure, discipline, and consistency.
 
 - **Atomic commits** — stages only files that belong to one logical change and flags unrelated concerns before committing
-- **50/72 rule** — measures subject line length with `wc -c` (never manual counting) and enforces the hard 72-character limit
+- **50/72 rule** — measures subject line length with `printf '%s' | wc -m` (character-accurate, never manual counting) and enforces the hard 72-character limit
 - **[Conventional Commits](https://www.conventionalcommits.org/) format** — `<type>[optional scope]: <description>` with a full type table (`feat`, `fix`, `chore`, `ci`, `docs`, `refactor`, `perf`, `test`, `style`, `build`, `revert`) and [SemVer](https://semver.org/) impact notes
-- **Autonomous `--yes` mode** — skips the confirmation prompt for hands-off runs; the 50/72 character-count check still applies, and a human reviews the resulting commits later (e.g. in the PR)
+- **Amend support** — amends the last commit under the same rules, allows a message-only amend on a clean tree, and warns before rewriting pushed history
+- **Default-branch warning** — flags commits landing directly on `main`/`master` and offers to create a feature branch first
+- **Autonomous `--yes` mode** — skips the confirmation prompt for hands-off runs: stages inferred files, auto-shortens 51–72 char subjects to ≤ 50, and still enforces the 50/72 check; a human reviews the resulting commits later (e.g. in the PR)
 - **Confirmation prompt** — shows files, character count, and full message before running `git commit` (skipped in `--yes` mode)
 
 ### `create-pr`
 
 Guides Claude through opening a GitHub pull request with a consistent format and a confirmation step before submitting.
 
-- **Derives title and body from commits** — inspects `git log` and recent PR history to match the project's established style
-- **Structured body template** — Summary, Changes, and Test plan sections
-- **Main-branch guard** — if invoked on `main` or `master` with unpushed commits, derives a semantic branch name, asks for confirmation, and creates the branch before opening the PR
+- **Derives title and body from commits** — inspects `git log` and recent PR titles to match the project's established style
+- **Structured body template** — Summary, Changes, and Test plan sections; the body is passed via a stdin heredoc so quotes, backticks, and `$` survive intact
+- **Default-branch guard** — detects the repo's default branch with `gh repo view` (no hardcoded `main`); if invoked on it with unpushed commits, derives a semantic branch name, creates the feature branch, and points the local default branch back at the remote
 - **Confirmation prompt** — shows branch, commit count, title, and body before running `gh pr create`
-- **Autonomous `--yes` mode** — skips the confirmation prompt for hands-off runs; a human still reviews the opened PR
+- **Autonomous `--yes` mode** — skips the confirmation prompt (including the branch-name confirmation in the guard) for hands-off runs; a human still reviews the opened PR
 - **Prints the PR URL** after creation for quick access
 
 ### `update-readme`
 
 Guides Claude through updating or creating README.md after any change worth documenting.
 
-- **Scope detection** — inspects recent commits and diffs to determine which sections need updating
+- **Scope detection** — inspects recent commits, the working tree, and diffs (widening past the last commit when needed) to determine which sections need updating
 - **Surgical edits** — touches only the affected section; never rewrites unrelated content
 - **Skip logic** — skips internal-only changes (refactors, CI tweaks, test fixes) that users wouldn't notice
 - **Creates from scratch** — generates a structured README.md if none exists
 - **Confirmation prompt** — shows affected sections and proposed changes before writing
+- **Autonomous `--yes` mode** — skips the confirmation prompt for hands-off runs; a human reviews the result later (e.g. in the PR)
 
 ### `test-api`
 
