@@ -79,7 +79,7 @@ Guides Claude through building a website feature end-to-end with `/impeccable`, 
 - **Full lifecycle loop:** shape, build, write e2e specs, gate, audit, critique, fix, commit, document, PR — then merge, version-bump, tag, and release — iterating `/impeccable audit` and `/impeccable critique` until the score plateaus
 - **Autonomous `--auto` mode:** collapses in-flow confirmations (scope, critique's hand-back) into a single review at the PR, using `critique-plan.mjs` to keep the fix loop converging non-interactively; still stops for the human gates (PR merge, release publish)
 - **Subagent delegation and model tiering:** under Claude Code, offloads the Phase 0 discovery reading to a read-only small-model subagent and drafts Phase 6 README / CLAUDE.md updates in parallel small-model subagents, keeping bulky reading out of the main context; the audit subagent stays on the session model, and critique always runs in the foreground (its internal fan-out cannot nest)
-- **Built-in agent types only, no custom definitions:** the delegation uses Claude Code's built-in read-only `Explore` type and the default general-purpose agent with per-call model overrides, so installing the skill file is enough; custom pinned-model agents (`agents/*.md`) are deliberately deferred until this repo ships as a Claude Code plugin, because `npx skills` cannot distribute agent definitions — until then a custom agent would be unreachable by consumers and a second copy of the tiering policy to keep in sync
+- **Built-in agent types only, no custom definitions:** the delegation uses Claude Code's built-in read-only `Explore` type and the default general-purpose agent with per-call model overrides, so installing the skill file is enough; custom pinned-model agents can ship later via the `web-dev` plugin's `agents/` directory when actually needed, but the SKILL.md keeps the built-in-type instructions regardless, because `npx skills` consumers cannot receive agent definitions
 - **Phase 0 permissions setup:** `setup.mjs` wires up every required allow entry in `.claude/settings.local.json`, previewing the delta before writing so a skill update can never widen permissions silently
 - **Project discovery first:** a setup phase reads `CLAUDE.md` / `AGENTS.md` and config to find the gates, feature pattern, enforcement, and design system before any code is written
 - **Cached discovery:** caches the discovery phase's findings to your OS user cache (keyed per repo) and skips rediscovery on later runs, re-deriving only entries whose source changed; the green-baseline gate run always repeats on a clean tree
@@ -102,6 +102,38 @@ Guides Claude through building a website feature end-to-end with `/impeccable`, 
 See [CLAUDE.md](CLAUDE.md) for repo conventions, skill usage rules, and the branch workflow expected when working in this repo with Claude Code.
 
 ## Installation
+
+Two channels serve the same skill sources. Pick one per project — mixing them
+installs the same skill twice under different names.
+
+### As Claude Code plugins (toolchain bundles)
+
+The repo is a plugin marketplace with two cohesion-grouped plugins:
+
+| Plugin | Contents |
+|---|---|
+| `git-workflow` | `commit-message` + `create-pr` skills plus the PreToolUse hard-gate hooks that enforce them (no manual `settings.json` wiring needed) |
+| `web-dev` | `develop-web-feature` + `update-readme` skills |
+
+```
+/plugin marketplace add pyaethu-aung/skills
+/plugin install git-workflow@pyaethu-aung-skills
+/plugin install web-dev@pyaethu-aung-skills
+```
+
+Plugin skills are namespaced: `/git-workflow:commit-message`,
+`/web-dev:develop-web-feature`. Updates arrive when the plugin `version`
+bumps. The plugin directories symlink to `skills/` and `.claude/hooks/`, so
+there is a single source of truth; the plugin installer dereferences the
+symlinks at install time.
+
+> **Known limitation:** `develop-web-feature`'s helper-script paths assume
+> the `npx skills` install location (`.claude/skills/develop-web-feature/`).
+> When installed via the `web-dev` plugin, substitute the skill's base
+> directory (shown at invocation) for that prefix. A portable path scheme is
+> planned.
+
+### Individual skills (`npx skills`)
 
 Install a specific skill into your project:
 
