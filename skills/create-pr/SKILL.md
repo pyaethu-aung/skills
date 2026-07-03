@@ -70,11 +70,12 @@ git diff origin/$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.n
 
 ## Recent PRs for style reference
 ```!
-gh pr list --state all --limit 5 --json number,title,body
+gh pr list --state all --limit 5 --json number,title
 ```
 
-Use the PR history above to match this project's established PR style
-(title format, body sections, level of detail).
+Use the PR titles above to match this project's established title
+style. Only titles are preloaded to keep context small; if you need to
+see body structure, run `gh pr view <number>` on one or two of them.
 
 ---
 
