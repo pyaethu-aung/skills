@@ -6,6 +6,8 @@
 - `.claude/skills/<name>` — local copy of the skill for Claude Code to use; may differ from source (e.g. extra `model` field)
 - `.claude/hooks/` — guard scripts that enforce skill usage
 - `.claude/settings.json` — PreToolUse hooks wiring the guards
+- `.claude-plugin/marketplace.json` — plugin marketplace manifest listing the `git-workflow` and `web-dev` plugins
+- `plugins/<name>/` — plugin roots; their `skills/` and `hooks/` script entries are **symlinks** into `skills/` and `.claude/hooks/` (single source of truth; the plugin installer dereferences them), plus a `.claude-plugin/plugin.json` manifest and, for `git-workflow`, a `hooks/hooks.json`
 - `.githooks/commit-msg` — git hook enforcing Conventional Commits on manual commits
 
 ## Skills
@@ -64,7 +66,7 @@ Use when adding, building, or designing a new web feature end-to-end.
 - Accepts `[--auto]` and a feature description as arguments (e.g. `Calendar event content type`)
 - Runs the full loop: shape → build → gate → audit → critique → fix → commit → document → PR, then merge → version-bump → release
 - `--auto` (or "autonomous"/"hands-off" in the request) collapses in-flow confirmations into a single review at the PR; the human gates (PR merge, release publish) still require explicit sign-off
-- Subagent delegation (Phase 0 discovery, Phase 6 doc drafts) uses only built-in agent types (`Explore`, general-purpose) with per-call model overrides; do not add custom agent definitions (`agents/*.md`) until this repo distributes as a Claude Code plugin — `npx skills` cannot ship them, so they would be unreachable by skill consumers
+- Subagent delegation (Phase 0 discovery, Phase 6 doc drafts) uses only built-in agent types (`Explore`, general-purpose) with per-call model overrides; custom agent definitions may ship via `plugins/web-dev/agents/` when actually needed, but the SKILL.md must keep the built-in-type instructions as the baseline — `npx skills` consumers cannot receive agent definitions
 
 ## Commit conventions
 
@@ -89,4 +91,5 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 1. Create `skills/<name>/SKILL.md`
 2. Copy it for local install: `cp -r skills/<name> .claude/skills/<name>`; add a `model` field to the local copy if needed
 3. If the skill wraps a sensitive command, add a guard hook in `.claude/hooks/` and wire it in `.claude/settings.json`
-4. Document it in `README.md`
+4. If it belongs to a toolchain, symlink it into the matching plugin (`ln -s ../../../skills/<name> plugins/<plugin>/skills/<name>`) and bump that plugin's `version` in its `plugin.json` and in `.claude-plugin/marketplace.json`; a guard hook also gets a symlink under the plugin's `hooks/` and a `${CLAUDE_PLUGIN_ROOT}` entry in its `hooks/hooks.json`
+5. Document it in `README.md`
