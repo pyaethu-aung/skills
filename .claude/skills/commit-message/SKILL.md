@@ -29,7 +29,8 @@ If the staged diff above is empty, inspect the working tree status above:
   which files you intend to stage and ask them to confirm before running
   `git add <files>`.
 - If there are no changes at all, stop and tell the user:
-  "Nothing to commit — working tree is clean."
+  "Nothing to commit — working tree is clean." (Exception: if the user
+  asked to amend, a clean tree is fine — see the amend section below.)
 - If the changes span multiple unrelated concerns, stage only the files
   that form one logical change, tell the user what you staged and why,
   and note that the remaining files should be committed separately.
@@ -42,6 +43,28 @@ git log --oneline -10
 Use the history above to match this project's existing commit style
 (types, scopes, level of detail in subjects). If the project deviates
 from Conventional Commits, follow the project's established pattern.
+
+## Amending a commit
+
+When the user asks to amend the last commit (its message, its content,
+or both):
+
+- Show the current message first: `git log -1 --format=%B`
+- A message-only amend with a clean working tree is valid; skip the
+  empty-diff handling above
+- If `git log @{upstream}..HEAD --oneline` is empty (or the commit
+  otherwise already exists on the remote), the commit has been pushed:
+  warn that amending rewrites published history and require explicit
+  confirmation, even when `--yes` was passed
+- All rules below still apply (atomic scope, 50/72, character count,
+  confirmation); show the old and the proposed new message side by
+  side in the confirmation summary
+- Run the amend with the skill token, preserving line breaks:
+  ```bash
+  CLAUDE_COMMIT_VIA_SKILL=1 git commit --amend -F - <<'EOF'
+  <full commit message>
+  EOF
+  ```
 
 ## 1. Atomic Commits
 
