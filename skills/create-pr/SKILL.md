@@ -46,7 +46,8 @@ branch. Move them to a feature branch before continuing:
      (e.g. `feat/add-pagination-support`)
    - Kebab-case, lowercase, no special characters except `/` and `-`
 2. Show the user the proposed branch name and ask them to confirm or
-   provide an alternative before proceeding.
+   provide an alternative before proceeding. If `--yes` was passed,
+   skip this confirmation and use the derived name directly.
 3. On confirmation, create and switch to the new branch:
    ```bash
    git checkout -b <branch-name>
