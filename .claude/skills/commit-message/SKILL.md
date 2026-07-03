@@ -5,7 +5,7 @@ metadata:
   version: "1.1.0"
 model: haiku
 argument-hint: "[--yes] (skip the confirmation prompt for hands-off runs)"
-allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git add:*) Bash(CLAUDE_COMMIT_VIA_SKILL=1 git commit:*) Bash(echo:*) Bash(wc:*)
+allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git add:*) Bash(CLAUDE_COMMIT_VIA_SKILL=1 git commit:*) Bash(printf:*) Bash(wc:*)
 ---
 
 # Commit Message Rules
@@ -160,8 +160,13 @@ Before showing the confirmation prompt, you MUST measure the subject
 line length by running:
 
 ```bash
-echo -n "<subject line>" | wc -c
+printf '%s' '<subject line>' | wc -m
 ```
+
+Keep the subject in single quotes so `$`, backticks, and double quotes
+in it are never shell-interpreted; if it contains a single quote,
+escape it as `'\''`. `wc -m` counts characters, not bytes, so
+multibyte text is measured correctly.
 
 Use the number returned by that command — never count manually. Display
 the result:
