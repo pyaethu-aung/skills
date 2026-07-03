@@ -64,6 +64,7 @@ Use when adding, building, or designing a new web feature end-to-end.
 - Accepts `[--auto]` and a feature description as arguments (e.g. `Calendar event content type`)
 - Runs the full loop: shape → build → gate → audit → critique → fix → commit → document → PR, then merge → version-bump → release
 - `--auto` (or "autonomous"/"hands-off" in the request) collapses in-flow confirmations into a single review at the PR; the human gates (PR merge, release publish) still require explicit sign-off
+- Subagent delegation (Phase 0 discovery, Phase 6 doc drafts) uses only built-in agent types (`Explore`, general-purpose) with per-call model overrides; do not add custom agent definitions (`agents/*.md`) until this repo distributes as a Claude Code plugin — `npx skills` cannot ship them, so they would be unreachable by skill consumers
 
 ## Commit conventions
 
