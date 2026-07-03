@@ -5,12 +5,24 @@ metadata:
   version: "1.1.0"
 model: haiku
 argument-hint: "[--yes] (skip the confirmation prompt for hands-off runs)"
-allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git add:*) Bash(CLAUDE_COMMIT_VIA_SKILL=1 git commit:*) Bash(printf:*) Bash(wc:*)
+allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git branch:*) Bash(git checkout:*) Bash(git add:*) Bash(CLAUDE_COMMIT_VIA_SKILL=1 git commit:*) Bash(printf:*) Bash(wc:*)
 ---
 
 # Commit Message Rules
 
 Follow these rules for every commit.
+
+## Current branch
+```!
+git branch --show-current
+```
+
+If the branch above is `main` or `master`, warn the user that this
+commit lands on the default branch and ask whether to create a feature
+branch first (suggest a semantic name, e.g. `feat/<slug>`) or commit
+here anyway. With `--yes`, proceed on the current branch but include
+the warning in your final output; the `/create-pr` guard can still
+move the commits to a feature branch later.
 
 ## Working tree status
 ```!
