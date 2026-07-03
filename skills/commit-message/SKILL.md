@@ -243,13 +243,13 @@ Simple fix (subject only):
 fix(auth): prevent session token from expiring prematurely
 ```
 
-Feature with body (note 72-char body wrap):
+Feature with body (every body line stays within 72 characters):
 ```
 feat(api): add pagination support to list endpoints
 
-Without pagination, list endpoints return all records in a single       |
-response. This causes memory spikes and slow response times as data     |
-grows. Adds cursor-based pagination with a default page size of 20.     |
+Without pagination, list endpoints return all records in a single
+response. This causes memory spikes and slow response times as data
+grows. Adds cursor-based pagination with a default page size of 20.
 ```
 
 Dependency bump:
