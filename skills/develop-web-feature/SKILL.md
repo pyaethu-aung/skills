@@ -2,7 +2,7 @@
 name: develop-web-feature
 description: "Develop, design, and ship a website feature end-to-end with /impeccable: shape, build, e2e specs, gate, audit, critique, fix, open a PR, and release. Portable across web projects. Use when asked to add, build, craft, or design a new feature."
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 argument-hint: "[--auto] The feature to build (e.g. 'Calendar event content type')"
 allowed-tools: Bash(npm*) Bash(npx*) Bash(node*) Bash(git:*) Bash(gh:*) Bash(grep*) Bash(ls*) Bash(cat*) Read Write Edit Task
 ---
@@ -164,11 +164,12 @@ Use the CLI, not a hand copy of the skill file: it installs the design skill
 leaves `/impeccable critique`'s detector failing with "bundled detector not
 found." Do not proceed without `/impeccable`.
 
-**`/commit-message` and `/create-pr` are optional.** They standardize commits
-and PRs, but the workflow completes without them. If the project has them (or
-you choose to add them: they are single-file skills, drop each `SKILL.md` into
-`.claude/skills/<name>/`), Phase 6 routes through them. If the user chooses not
-to install them, Phase 6 falls back to doing the commit and PR directly, with
+**`/commit-message`, `/create-pr`, and `/update-readme` are optional.** They
+standardize commits, PRs, and README updates, but the workflow completes
+without them. If the project has them (or you choose to add them: they are
+single-file skills, drop each `SKILL.md` into `.claude/skills/<name>/`),
+Phase 6 routes through them. If the user chooses not to install them, Phase 6
+falls back to doing the commit, the PR, and the README update directly, with
 the same conventions inlined there.
 
 **Choose the browser driver (CLI preferred, MCP fallback).** Critique drives the
@@ -245,6 +246,30 @@ fill in the rest. Establish:
   so you do not chase noise.
 
 If any of these is ambiguous, ask rather than guess.
+
+### Under Claude Code: delegate the discovery reading
+
+The reading in this step (the flagged docs, the lint config, the comparable
+feature's full file layout) is the largest context cost in the workflow, and
+only the terse baseline survives into the cache. Under Claude Code, **do not
+read those files on the main thread**: spawn a read-only discovery subagent
+and let it do the reading. Invoke the Task tool with `subagent_type:
+"Explore"`, a small/fast model override (e.g. `model: "haiku"` — the task is
+structured extraction, not judgment) when the harness supports one, and a
+prompt of this shape:
+
+> Run `node .claude/skills/develop-web-feature/scripts/discover.mjs`, read
+> the doc files it flags plus CLAUDE.md / AGENTS.md and the lint config, and
+> locate the newest feature comparable to `<feature>`. Return only the terse
+> baseline markdown for the project cache (gates, feature pattern,
+> enforcement, design system, what is NOT a gate), ready for
+> `cache-write.mjs`.
+
+Two things stay on the main thread regardless: the green-baseline gate run
+(a live fact the main agent must witness) and `setup.mjs` (permission changes
+must stay visible). A subagent's tool calls still gate on permissions, so in
+a hands-off run delegate only after `setup.mjs --write` has applied the
+grants. Only a harness without subagents runs the discovery inline as above.
 
 ### Cache the baseline
 
@@ -353,7 +378,11 @@ the same time. They are asymmetric, so the split is one-sided:
 
 - **Offload `audit` to a background subagent** (the `Task` tool). It asks
   nothing and returns a report you fix from, so it is safe to run headless.
-- **Keep `critique` in the foreground.** It drives a browser and calls
+  Keep it on the **session model, not a smaller one**: audit is a judgment
+  pass (a11y, performance, anti-patterns), and a downgraded audit saves
+  tokens by missing findings you pay for again in Phase 5.
+- **Keep `critique` in the foreground — in default and hands-off runs
+  alike.** It drives a browser and calls
   `AskUserQuestion`, neither of which an autonomous subagent can do, and
   it already fans out its own Assessment A/B subagents internally: nesting it
   inside a subagent would force critique back to its slower sequential
@@ -467,7 +496,9 @@ every commit:
 2. **The docs the change moved, each as its own commit, before the PR.** Skip
    any whose trigger did not fire; most features touch one or two, not all
    three:
-   - **README** (`/update-readme`) when user-visible behavior changed.
+   - **README** when user-visible behavior changed — via `/update-readme`
+     when installed, else edit README.md directly with the same discipline
+     (surgical edits to the affected sections only, never a rewrite).
    - **CLAUDE.md / AGENTS.md** when architecture, conventions, commands, or the
      directory layout changed (a hand-written conventional commit): what a
      future contributor or agent needs to know.
@@ -477,6 +508,21 @@ every commit:
 
    This matches the project's own history, where `docs:`, `chore(claude):`, and
    `docs(design):` commits land separately from the `feat:` commit.
+
+   **Under Claude Code, draft the doc updates in parallel.** When more than
+   one trigger fired, the updates are independent of each other: delegate
+   each to its own subagent and launch them in a single message so they run
+   concurrently — one general-purpose subagent for the README update (routed
+   through `/update-readme` when installed, else a direct surgical edit), and
+   one for the CLAUDE.md / AGENTS.md update.
+   Both are mechanical summarization of a diff, so pass a small/fast model
+   override (e.g. `model: "haiku"`) when the harness supports one.
+   `/impeccable document` (DESIGN.md) stays on the main thread and the
+   session model: it reasons about the design system. The *drafts*
+   parallelize; the *commits* do not — review each subagent's edit, then
+   commit them sequentially, one per doc, through the same boundaries as
+   above. Do the updates inline only when a single trigger fired or the
+   harness has no subagents.
 3. **The PR**, opened last so it carries the feature and the doc commits.
 
 **If `/commit-message` and `/create-pr` are installed,** route through them;
@@ -605,6 +651,14 @@ publish is an outward action to confirm before running.
 - **Treat the detector as one signal.** `/impeccable critique`'s automated
   scan can be unavailable or noisy; weigh it alongside the design review, not
   above it.
+- **Tier models by judgment, not by output size.** Where the harness supports
+  per-subagent model selection, give the small/fast model only the structured
+  extraction and summarization steps (Phase 0 discovery, Phase 6 README and
+  CLAUDE.md drafts); keep shaping, building, audit, critique, and the fix
+  loop on the session model. A cheap finding or fix pass inflates the Phase 5
+  loop and costs more than it saves. The larger saving is context isolation,
+  not model price: a subagent that returns only its conclusion keeps the
+  bulky reading out of the main context for the rest of the session.
 
 ## Worked example (illustration only)
 
@@ -632,9 +686,10 @@ What Phase 0 surfaced in one React + Vite + Tailwind project, to show the
   `npx impeccable skills install`, then `/impeccable init` inside the AI tool.
   It is the npm package `impeccable`; the CLI compiles the skill and installs
   the detector engine that `/impeccable critique` needs.
-- **`/commit-message`, `/create-pr` (optional):** install with
-  `npx skills add pyaethu-aung/skills --skill commit-message` (and
-  `--skill create-pr`), or skip them to use Phase 6's direct fallback.
+- **`/commit-message`, `/create-pr`, `/update-readme` (optional):** install
+  with `npx skills add pyaethu-aung/skills --skill commit-message` (and
+  `--skill create-pr`, `--skill update-readme`), or skip them to use Phase
+  6's direct fallback.
 - **This skill:** `npx skills add pyaethu-aung/skills --skill develop-web-feature`
   (add `--global` to install it for every project).
 
