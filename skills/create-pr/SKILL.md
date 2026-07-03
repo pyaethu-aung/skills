@@ -2,7 +2,7 @@
 name: create-pr
 description: Use when creating a GitHub pull request. Derives title and body from commits, enforces a consistent PR format, and confirms before submitting.
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 argument-hint: "[--yes] (skip the confirmation prompt for hands-off runs)"
 allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git branch:*) Bash(git checkout:*) Bash(git push:*) Bash(gh pr:*) Bash(CLAUDE_PR_VIA_SKILL=1 gh pr create:*) Bash(gh repo:*)
 ---

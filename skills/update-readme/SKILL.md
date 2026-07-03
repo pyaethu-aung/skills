@@ -2,7 +2,7 @@
 name: update-readme
 description: Use after any change worth documenting — new feature, new skill, config change, or breaking change. Updates README.md to reflect the change, or creates it if missing.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 argument-hint: "[--yes] (skip the confirmation prompt for hands-off runs)"
 allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(ls:*) Glob Read Write Edit
 ---
