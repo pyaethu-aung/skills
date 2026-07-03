@@ -1,0 +1,21 @@
+{
+  "name": "pyaethu-aung-skills",
+  "description": "AI agent skills grouped into installable toolchains: git commit/PR discipline with enforcement hooks, and end-to-end web feature development",
+  "owner": {
+    "name": "Pyae Thu Aung"
+  },
+  "plugins": [
+    {
+      "name": "git-workflow",
+      "source": "./plugins/git-workflow",
+      "description": "Commit and PR discipline in one install: the /commit-message and /create-pr skills plus the PreToolUse hard-gate hooks that enforce them",
+      "version": "1.0.0"
+    },
+    {
+      "name": "web-dev",
+      "source": "./plugins/web-dev",
+      "description": "End-to-end web feature development with /impeccable: the /develop-web-feature workflow skill and its /update-readme companion",
+      "version": "1.0.0"
+    }
+  ]
+}
