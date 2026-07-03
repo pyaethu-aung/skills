@@ -129,8 +129,14 @@ Body:
 Proceed? (yes / edit / cancel)
 ```
 
-- **yes**: push the branch if not already pushed, then run
-  `CLAUDE_PR_VIA_SKILL=1 gh pr create --title "<title>" --body "<body>" --base <default>`
+- **yes**: push the branch if not already pushed, then create the PR,
+  passing the body via stdin so quotes, backticks, and `$` in it are
+  never shell-interpreted:
+  ```bash
+  CLAUDE_PR_VIA_SKILL=1 gh pr create --title "<title>" --base <default> --body-file - <<'EOF'
+  <body>
+  EOF
+  ```
 - **edit**: ask what to change, revise, and show the summary again
 - **cancel**: stop without creating the PR
 
