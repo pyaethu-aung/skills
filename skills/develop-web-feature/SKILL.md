@@ -183,11 +183,22 @@ already available in the project, install it from the project root:
 npx impeccable skills install
 ```
 
-then, inside the AI tool:
+After a mid-session install, do two things before using it:
 
-```
-/impeccable init
-```
+1. **Re-run the setup script with `--write`.** The dry run now shows the
+   impeccable entries as the delta (`Skill(impeccable)`, `Skill(impeccable:*)`,
+   and its script grants): the conditional detection only sees
+   `.claude/skills/impeccable` after the install, so a setup run from before
+   it could not have granted them.
+2. **Confirm `/impeccable` is invocable, then run `/impeccable init`.**
+   Claude Code watches existing skill directories, so when `.claude/skills/`
+   already existed at session start the new skill appears in the same session
+   on its own. If it does not appear, `.claude/skills/` itself was created by
+   this install (common on the plugin channel, where this skill does not live
+   there) and the watcher cannot see it: **stop and hand back** — ask the
+   user to run `/reload-skills` (a user-typed command; Claude Code 2.1.152+)
+   or, failing that, to restart the session and re-invoke this skill. This
+   bootstrap stop happens at most once per project.
 
 Use the CLI, not a hand copy of the skill file: it installs the design skill
 **and** its anti-pattern detector engine. A copy-only or symlink-only install
