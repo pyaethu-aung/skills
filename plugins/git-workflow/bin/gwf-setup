@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# git-workflow plugin wrapper: runs the plugin's permission setup script from
+# the plugin root, so grants can be path-independent (Bash(gwf-setup*)).
+exec node "$(dirname "$0")/../scripts/setup.mjs" "$@"
