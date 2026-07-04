@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# web-dev plugin wrapper: runs the develop-web-feature helper script from the
+# plugin root, so permission grants can be path-independent (Bash(dwf-cache-check*)).
+exec node "$(dirname "$0")/../skills/develop-web-feature/scripts/cache-check.mjs" "$@"

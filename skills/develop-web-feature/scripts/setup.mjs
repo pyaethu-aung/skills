@@ -31,8 +31,19 @@
  * and run unchanged in any web project.
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 
 const SETTINGS_PATH = '.claude/settings.local.json';
+
+// --- Detect the install channel ---
+// npx skills installs this skill at <project>/.claude/skills/develop-web-feature/;
+// the web-dev plugin runs these scripts from the plugin cache via its dwf-* bin
+// wrappers. The channel decides which command forms the grants must match, so
+// derive it from where this script actually lives.
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
+const NPX_SCRIPT_DIR = resolve('.claude/skills/develop-web-feature/scripts');
+const isPluginChannel = SCRIPT_DIR !== NPX_SCRIPT_DIR;
 
 function readJSON(path) {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
@@ -115,13 +126,26 @@ const EDIT_GRANTS = grantEdits
   ? SOURCE_DIRS.filter((d) => existsSync(d)).flatMap((d) => EDIT_TOOLS.map((tool) => `${tool}(${d}/**)`))
   : [];
 
+// The skill's own helper scripts (the gate runner, Phase 0 scripts, the
+// dev-server lifecycle helper, and critique-plan for the hands-off fix loop).
+// The command form is channel-dependent: node + project path under npx skills,
+// the plugin's dwf-* bin wrappers under the web-dev plugin — the wrapper names
+// are stable across machines, unlike the plugin cache path.
+const SCRIPT_NAMES = ['setup', 'discover', 'gates', 'dev-server', 'critique-plan', 'cache-check', 'cache-write'];
+const SCRIPT_GRANTS = SCRIPT_NAMES.map((n) =>
+  isPluginChannel
+    ? `Bash(dwf-${n}*)`
+    : `Bash(node .claude/skills/develop-web-feature/scripts/${n}.mjs*)`,
+);
+
 const REQUIRED = [
   // Full-suite gate runs (test / lint / build / e2e) go through the gate runner,
-  // which orchestrates them in Node and logs each to the cache dir. This single
-  // entry replaces the broad `<pm> run *` grant and the `echo` status-marker
-  // grant, and removes the `$?` / `>` / `&&` permission-prompt class (those live
-  // inside the script now, where the permission heuristics never apply).
-  'Bash(node .claude/skills/develop-web-feature/scripts/gates.mjs*)',
+  // which orchestrates them in Node and logs each to the cache dir. That single
+  // entry (in SCRIPT_GRANTS) replaces the broad `<pm> run *` grant and the
+  // `echo` status-marker grant, and removes the `$?` / `>` / `&&`
+  // permission-prompt class (those live inside the script now, where the
+  // permission heuristics never apply).
+  ...SCRIPT_GRANTS,
   // The skill's one hard dependency, installed via npx (available under any PM).
   'Bash(npx impeccable*)',
   // Spec / fixture directory creation. `mkdir -p` is create-only, never destructive.
@@ -131,15 +155,6 @@ const REQUIRED = [
   // Deleting the skill's own temp files (critique body, screenshots). Scoped to
   // the gitignored cache dir, so a bare `rm` elsewhere still prompts.
   'Bash(rm -f .cache/develop-web-feature/*)',
-  // Phase 0 scripts + the dev-server lifecycle helper (replaces raw curl/lsof/pkill/kill)
-  'Bash(node .claude/skills/develop-web-feature/scripts/setup.mjs*)',
-  'Bash(node .claude/skills/develop-web-feature/scripts/cache-check.mjs*)',
-  'Bash(node .claude/skills/develop-web-feature/scripts/discover.mjs*)',
-  'Bash(node .claude/skills/develop-web-feature/scripts/cache-write.mjs*)',
-  'Bash(node .claude/skills/develop-web-feature/scripts/dev-server.mjs*)',
-  // Reads /impeccable critique's persisted snapshot to drive the hands-off fix
-  // loop without waiting on critique's interactive Recommended Actions prompt.
-  'Bash(node .claude/skills/develop-web-feature/scripts/critique-plan.mjs*)',
   // Git: read-only inspection, staging, and branch creation. Commit and PR
   // creation stay gated behind the /commit-message and /create-pr skills (their
   // sentinel-prefixed forms are added conditionally below); these cover
@@ -197,6 +212,29 @@ const CONDITIONAL = [
   { path: '.claude/skills/create-pr',           entry: 'Bash(gh pr list:*)' },
 ];
 
+// Plugin-channel skill tokens. Plugin-installed skills are namespaced
+// (/web-dev:develop-web-feature) and never appear under .claude/skills, so the
+// filesystem detection above cannot see them. When this script itself runs from
+// the plugin cache, grant the namespaced forms for the skills the two plugins
+// bundle, plus the sentinel/read entries their guard hooks and verify steps
+// need. Entries for a plugin that is not installed are inert.
+const PLUGIN_SKILL_TOKENS = isPluginChannel
+  ? [
+      'Skill(web-dev:develop-web-feature)',
+      'Skill(web-dev:develop-web-feature:*)',
+      'Skill(web-dev:update-readme)',
+      'Skill(web-dev:update-readme:*)',
+      'Skill(git-workflow:commit-message)',
+      'Skill(git-workflow:commit-message:*)',
+      'Skill(git-workflow:create-pr)',
+      'Skill(git-workflow:create-pr:*)',
+      'Bash(CLAUDE_COMMIT_VIA_SKILL=1 git commit:*)',
+      'Bash(CLAUDE_PR_VIA_SKILL=1 gh pr create:*)',
+      'Bash(gh pr view:*)',
+      'Bash(gh pr list:*)',
+    ]
+  : [];
+
 let settings = {};
 if (existsSync(SETTINGS_PATH)) {
   try {
@@ -217,7 +255,7 @@ const applyMode = process.argv.slice(2).includes('--write');
 // each CONDITIONAL entry whose skill/tool is actually present. De-dupe while
 // preserving order (a Set keeps insertion order).
 const initialAllow = new Set(settings.permissions.allow);
-const candidates = [...REQUIRED, ...TOOLCHAIN, ...MCP_PLAYWRIGHT, ...EDIT_GRANTS];
+const candidates = [...REQUIRED, ...TOOLCHAIN, ...MCP_PLAYWRIGHT, ...EDIT_GRANTS, ...PLUGIN_SKILL_TOKENS];
 for (const { path, entry } of CONDITIONAL) {
   if (existsSync(path)) candidates.push(entry);
 }

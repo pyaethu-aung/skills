@@ -87,6 +87,29 @@ loop, atomic commits, and the disciplines are unchanged.
 
 ## Phase 0: Set up
 
+### Resolve the install channel (do this first)
+
+This skill ships through two channels and the helper-script command form
+differs. Check the skill's **base directory** (shown at invocation) once, and
+apply the matching form to every script command in this skill:
+
+- **`.claude/skills/develop-web-feature/`** — the `npx skills` install. Use
+  the commands exactly as written throughout
+  (`node .claude/skills/develop-web-feature/scripts/<name>.mjs`).
+- **Anywhere else (the plugin cache)** — the `web-dev` plugin install. The
+  plugin puts wrapper commands on the PATH; substitute `dwf-<name>` for
+  `node .claude/skills/develop-web-feature/scripts/<name>.mjs` everywhere:
+  `dwf-setup`, `dwf-discover`, `dwf-gates`, `dwf-dev-server`,
+  `dwf-critique-plan`, `dwf-cache-check`, `dwf-cache-write`. Skill
+  invocations are namespaced on this channel (`/web-dev:develop-web-feature`,
+  `/git-workflow:commit-message`, …); read every skill reference below
+  accordingly.
+
+`setup.mjs` detects the channel itself (from where it runs) and writes the
+matching grant and token forms, so no permission entry needs hand-editing
+when switching channels — but do not mix channels in one project: the same
+skill installed twice under different names is a recipe for confusion.
+
 ### Configure permissions
 
 The setup script wires up every required allow entry in
@@ -133,10 +156,17 @@ blocked by the project's `pre-push` hook.
 > `Skill(name:*)`: the `:*` form is what matches an invocation that carries
 > arguments (e.g. `/impeccable craft <feature>`).
 
-The only entry that must exist beforehand (to approve `setup.mjs` itself) is:
+The only entry that must exist beforehand (to approve `setup.mjs` itself) is
+the one matching the install channel — for an `npx skills` install:
 
 ```json
 "Bash(node .claude/skills/develop-web-feature/scripts/setup.mjs*)"
+```
+
+or, for the `web-dev` plugin install:
+
+```json
+"Bash(dwf-setup*)"
 ```
 
 Add it to `.claude/settings.local.json` once; `setup.mjs` handles everything
