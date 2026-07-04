@@ -30,7 +30,7 @@
  * git grants are ecosystem-generic. So this is safe to ship via a skills repo
  * and run unchanged in any web project.
  */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
@@ -212,26 +212,18 @@ const CONDITIONAL = [
   { path: '.claude/skills/create-pr',           entry: 'Bash(gh pr list:*)' },
 ];
 
-// Plugin-channel skill tokens. Plugin-installed skills are namespaced
+// Plugin-channel skill tokens — web-dev's OWN skills only. They are namespaced
 // (/web-dev:develop-web-feature) and never appear under .claude/skills, so the
-// filesystem detection above cannot see them. When this script itself runs from
-// the plugin cache, grant the namespaced forms for the skills the two plugins
-// bundle, plus the sentinel/read entries their guard hooks and verify steps
-// need. Entries for a plugin that is not installed are inert.
+// filesystem detection above cannot see them; but web-dev is running this very
+// script, so its tokens are always valid. Other plugins own their grants: the
+// git-workflow plugin ships its own gwf-setup with the same dry-run/--write
+// contract — this script never writes another plugin's entries.
 const PLUGIN_SKILL_TOKENS = isPluginChannel
   ? [
       'Skill(web-dev:develop-web-feature)',
       'Skill(web-dev:develop-web-feature:*)',
       'Skill(web-dev:update-readme)',
       'Skill(web-dev:update-readme:*)',
-      'Skill(git-workflow:commit-message)',
-      'Skill(git-workflow:commit-message:*)',
-      'Skill(git-workflow:create-pr)',
-      'Skill(git-workflow:create-pr:*)',
-      'Bash(CLAUDE_COMMIT_VIA_SKILL=1 git commit:*)',
-      'Bash(CLAUDE_PR_VIA_SKILL=1 gh pr create:*)',
-      'Bash(gh pr view:*)',
-      'Bash(gh pr list:*)',
     ]
   : [];
 
@@ -286,6 +278,9 @@ if (!applyMode) {
 
 // --write: apply the delta.
 for (const entry of toAdd) settings.permissions.allow.push(entry);
+// A plugin-channel project may have no .claude/ directory yet — nothing else
+// creates it before this script runs.
+mkdirSync('.claude', { recursive: true });
 writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2) + '\n');
 console.log(`[setup] Added ${toAdd.length} allow ${toAdd.length === 1 ? 'entry' : 'entries'} to ${SETTINGS_PATH}:`);
 toAdd.forEach((entry) => console.log(`  + ${entry}`));
