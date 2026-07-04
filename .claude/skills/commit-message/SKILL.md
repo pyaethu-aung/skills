@@ -2,7 +2,7 @@
 name: commit-message
 description: Use when creating or amending git commits. Enforces atomic commits, the 50/72 subject/body rule, and Conventional Commits format.
 metadata:
-  version: "1.2.0"
+  version: "1.2.1"
 model: haiku
 argument-hint: "[--yes] (skip the confirmation prompt for hands-off runs)"
 allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git branch:*) Bash(git checkout:*) Bash(git add:*) Bash(CLAUDE_COMMIT_VIA_SKILL=1 git commit:*) Bash(printf:*) Bash(wc:*)
@@ -217,6 +217,14 @@ Proposed message:
 
 Proceed? (yes / edit message / cancel)
 ```
+
+**The confirmation dialog must carry the summary itself.** When the harness
+renders this pause as an interactive question (e.g. Claude Code's
+AskUserQuestion dialog), the user may see only the dialog, not the chat text
+before it. Never ask a bare "Proceed with this commit?": put the subject line
+and its measured character count in the question text, and attach the file
+list and full commit message as the confirm option's preview so they are
+visible inside the dialog itself.
 
 - **yes**: run the commit with the skill token the PreToolUse guard requires,
   using a heredoc to preserve line breaks:
