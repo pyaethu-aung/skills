@@ -24,8 +24,11 @@ git status --short
 ```
 
 ```!
-git diff HEAD~1 HEAD --stat 2>/dev/null || echo "(no parent commit to diff against)"
+git diff HEAD~1 HEAD --stat
 ```
+
+If the diff above errored because the repo has only one commit (no
+`HEAD~1`), run `git log -1 --stat` instead.
 
 If the change being documented spans more than the last commit (or is
 still uncommitted, per the status above), widen the diff yourself,
