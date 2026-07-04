@@ -112,7 +112,7 @@ The repo is a plugin marketplace with two cohesion-grouped plugins:
 
 | Plugin | Contents |
 |---|---|
-| `git-workflow` | `commit-message` + `create-pr` skills plus the PreToolUse hard-gate hooks that enforce them (no manual `settings.json` wiring needed) |
+| `git-workflow` | `commit-message` + `create-pr` skills, the PreToolUse hard-gate hooks that enforce them (no manual `settings.json` wiring needed), and the `gwf-setup` permission-setup command |
 | `web-dev` | `develop-web-feature` + `update-readme` skills, plus `dwf-*` helper commands on the PATH |
 
 ```
@@ -134,6 +134,10 @@ install runs them by project path
 that join the PATH while the plugin is enabled. `setup.mjs` detects which
 channel it is running from and writes the matching permission grants and
 `Skill()` token forms, so hands-off runs work unattended on either channel.
+
+Each plugin owns its own grants: `dwf-setup` writes only `web-dev`'s entries,
+and `git-workflow` ships its own `gwf-setup` (same dry-run / `--write`
+contract) for its skill tokens and the sentinel forms its guard hooks demand.
 
 ### Individual skills (`npx skills`)
 

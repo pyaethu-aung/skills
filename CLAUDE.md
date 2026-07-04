@@ -7,7 +7,7 @@
 - `.claude/hooks/` — guard scripts that enforce skill usage
 - `.claude/settings.json` — PreToolUse hooks wiring the guards
 - `.claude-plugin/marketplace.json` — plugin marketplace manifest listing the `git-workflow` and `web-dev` plugins
-- `plugins/<name>/` — plugin roots; their `skills/` and `hooks/` script entries are **symlinks** into `skills/` and `.claude/hooks/` (single source of truth; the plugin installer dereferences them), plus a `.claude-plugin/plugin.json` manifest and, for `git-workflow`, a `hooks/hooks.json`; `web-dev` also ships `bin/dwf-*` wrappers so the develop-web-feature helper scripts have stable, path-independent commands on the plugin channel
+- `plugins/<name>/` — plugin roots; their `skills/` and `hooks/` script entries are **symlinks** into `skills/` and `.claude/hooks/` (single source of truth; the plugin installer dereferences them), plus a `.claude-plugin/plugin.json` manifest and, for `git-workflow`, a `hooks/hooks.json`; `web-dev` also ships `bin/dwf-*` wrappers so the develop-web-feature helper scripts have stable, path-independent commands on the plugin channel, and `git-workflow` ships `bin/gwf-setup` + `scripts/setup.mjs` for its own permission grants — each plugin owns its own scripts and grants, never another plugin's
 - `.githooks/commit-msg` — git hook enforcing Conventional Commits on manual commits
 
 ## Skills
