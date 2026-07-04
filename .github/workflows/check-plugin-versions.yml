@@ -1,0 +1,17 @@
+name: Check Plugin Versions
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-plugin-versions:
+    name: Plugin version bump check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require a version bump when plugin content changed
+        run: python3 .github/scripts/check_plugin_versions.py "origin/${{ github.base_ref }}"
