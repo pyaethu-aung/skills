@@ -154,8 +154,11 @@ also adds the skill-invocation tokens `Skill(develop-web-feature)`,
 script forms, the sentinel-prefixed commit / PR forms the guard hooks require, and
 `gh pr view` / `gh pr list` for create-pr's existing-PR check and verify. Commit
 and PR creation therefore stay gated behind their skills; `gh pr merge` stays
-ungranted (Phase 7 is a human gate); and pushing to the default branch stays
-blocked by the project's `pre-push` hook.
+ungranted (Phase 7 is a human gate); and `git push` is never granted in
+settings — `/create-pr` pre-approves it via its own `allowed-tools` while it
+runs, and the direct no-create-pr fallback prompts once, since an
+auto-approved outward push is only safe behind a default-branch `pre-push`
+hook that not every project has.
 
 > **Token gotcha:** the Claude Code permission token is `Skill(name)` —
 > **singular**. The plural `Skills(name)` silently never matches, so a setup that
@@ -657,8 +660,10 @@ publish is an outward action to confirm before running.
 - **Inspect files with the Read and Grep tools, not shell parsers.** Reaching for
   `python3 -c`, `jq`, or `cat`/`sed` to read or pretty-print a file needs broad
   shell grants and prompts in a hands-off run; the Read and Grep tools need no
-  Bash permission. Remove a tracked file with `git rm <path>` (granted), not a
-  bare `rm` (intentionally not auto-allowed).
+  Bash permission. Remove a tracked file with `git rm <path>`, not a bare
+  `rm`: neither is auto-allowed (every delete path prompts, intentionally),
+  but `git rm` stages a recoverable deletion of tracked content while `rm`
+  destroys it.
 - **Redirect output to the cache dir, never `/tmp/`.** A `/tmp/` path triggers a
   path-access prompt that `Bash()` allow entries cannot suppress; write logs to
   `.cache/develop-web-feature/<name>.log` instead. Full gate runs need no manual

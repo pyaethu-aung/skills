@@ -166,16 +166,20 @@ const REQUIRED = [
   'Bash(git branch:*)',
   'Bash(git rev-parse:*)',
   'Bash(git add:*)',
-  // Removing tracked files (e.g. deleting a locale/module). `git rm` both deletes
-  // and stages; plain `rm` stays ungranted so destructive deletes still prompt.
-  'Bash(git rm:*)',
+  // git rm is deliberately NOT granted: tracked-file deletion is occasional
+  // enough that a one-off prompt beats a standing destructive grant (plain
+  // `rm` stays ungranted too, so every delete path prompts).
   // Unstaging so each logical change commits atomically (stage a subset, commit,
-  // repeat). Covers `--hard` too, but the workflow commits incrementally.
-  'Bash(git reset:*)',
+  // repeat). `--staged` is part of the match, so the destructive forms (`git
+  // reset --hard`, working-tree `git restore`) still prompt.
+  'Bash(git restore --staged:*)',
   'Bash(git switch:*)',
   'Bash(git checkout -b:*)',
-  // The one outward git action; the pre-push hook still blocks pushes to the default branch.
-  'Bash(git push:*)',
+  // git push is deliberately NOT granted here: /create-pr pre-approves it via
+  // its own allowed-tools while it runs (the recommended path in every mode),
+  // and the direct no-create-pr fallback should prompt once — an auto-approved
+  // outward push is only safe in projects whose pre-push hook blocks the
+  // default branch, which cannot be assumed.
 ];
 
 // Added only when the corresponding skill or tool is present
