@@ -113,7 +113,7 @@ The repo is a plugin marketplace with two cohesion-grouped plugins:
 | Plugin | Contents |
 |---|---|
 | `git-workflow` | `commit-message` + `create-pr` skills plus the PreToolUse hard-gate hooks that enforce them (no manual `settings.json` wiring needed) |
-| `web-dev` | `develop-web-feature` + `update-readme` skills |
+| `web-dev` | `develop-web-feature` + `update-readme` skills, plus `dwf-*` helper commands on the PATH |
 
 ```
 /plugin marketplace add pyaethu-aung/skills
@@ -127,11 +127,13 @@ bumps. The plugin directories symlink to `skills/` and `.claude/hooks/`, so
 there is a single source of truth; the plugin installer dereferences the
 symlinks at install time.
 
-> **Known limitation:** `develop-web-feature`'s helper-script paths assume
-> the `npx skills` install location (`.claude/skills/develop-web-feature/`).
-> When installed via the `web-dev` plugin, substitute the skill's base
-> directory (shown at invocation) for that prefix. A portable path scheme is
-> planned.
+`develop-web-feature`'s helper scripts work on both channels: the `npx skills`
+install runs them by project path
+(`node .claude/skills/develop-web-feature/scripts/<name>.mjs`), while the
+`web-dev` plugin ships `dwf-*` wrapper commands (`dwf-setup`, `dwf-gates`, …)
+that join the PATH while the plugin is enabled. `setup.mjs` detects which
+channel it is running from and writes the matching permission grants and
+`Skill()` token forms, so hands-off runs work unattended on either channel.
 
 ### Individual skills (`npx skills`)
 
@@ -185,6 +187,23 @@ python3 .github/scripts/validate_skills.py
 > Settings → Branches → Add branch protection rule → `main`
 > → ✅ Require status checks to pass before merging
 > → Search for and add: `Validate skill format`
+
+### Plugin version check
+
+Every pull request targeting `main` runs
+`.github/workflows/check-plugin-versions.yml`, which executes
+`.github/scripts/check_plugin_versions.py` against the PR's base.
+
+**What it checks:**
+
+- When files a plugin ships change (its `plugins/<name>/` directory **or** the
+  `skills/` and `.claude/hooks/` sources its symlinks point at), the plugin's
+  `version` must change in both `plugin.json` and `marketplace.json`
+- The two manifests must agree on the version
+- A plugin absent from the base ref (its first release) is exempt
+
+Without this, a skill edit would silently never reach plugin users, because
+plugin updates are delivered only on a version bump.
 
 ### Hook script linting
 
