@@ -7,7 +7,7 @@
 - `.claude/hooks/` — guard scripts that enforce skill usage
 - `.claude/settings.json` — PreToolUse hooks wiring the guards
 - `.claude-plugin/marketplace.json` — plugin marketplace manifest listing the `git-workflow` and `web-dev` plugins
-- `plugins/<name>/` — plugin roots; their `skills/` and `hooks/` script entries are **symlinks** into `skills/` and `.claude/hooks/` (single source of truth; the plugin installer dereferences them), plus a `.claude-plugin/plugin.json` manifest and, for `git-workflow`, a `hooks/hooks.json`
+- `plugins/<name>/` — plugin roots; their `skills/` and `hooks/` script entries are **symlinks** into `skills/` and `.claude/hooks/` (single source of truth; the plugin installer dereferences them), plus a `.claude-plugin/plugin.json` manifest and, for `git-workflow`, a `hooks/hooks.json`; `web-dev` also ships `bin/dwf-*` wrappers so the develop-web-feature helper scripts have stable, path-independent commands on the plugin channel
 - `.githooks/commit-msg` — git hook enforcing Conventional Commits on manual commits
 
 ## Skills
@@ -91,5 +91,5 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 1. Create `skills/<name>/SKILL.md`
 2. Copy it for local install: `cp -r skills/<name> .claude/skills/<name>`; add a `model` field to the local copy if needed
 3. If the skill wraps a sensitive command, add a guard hook in `.claude/hooks/` and wire it in `.claude/settings.json`
-4. If it belongs to a toolchain, symlink it into the matching plugin (`ln -s ../../../skills/<name> plugins/<plugin>/skills/<name>`) and bump that plugin's `version` in its `plugin.json` and in `.claude-plugin/marketplace.json`; a guard hook also gets a symlink under the plugin's `hooks/` and a `${CLAUDE_PLUGIN_ROOT}` entry in its `hooks/hooks.json`
+4. If it belongs to a toolchain, symlink it into the matching plugin (`ln -s ../../../skills/<name> plugins/<plugin>/skills/<name>`) and bump that plugin's `version` in its `plugin.json` and in `.claude-plugin/marketplace.json` (skip the bump while the plugin has never been released — new content folds into the initial version); a guard hook also gets a symlink under the plugin's `hooks/` and a `${CLAUDE_PLUGIN_ROOT}` entry in its `hooks/hooks.json`. CI enforces the bump via `check_plugin_versions.py`
 5. Document it in `README.md`
