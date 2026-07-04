@@ -110,6 +110,13 @@ matching grant and token forms, so no permission entry needs hand-editing
 when switching channels — but do not mix channels in one project: the same
 skill installed twice under different names is a recipe for confusion.
 
+Each plugin owns its own grants. On the plugin channel, `setup.mjs` manages
+only web-dev's entries; when the **git-workflow plugin** is installed, also
+run its `gwf-setup` (same dry-run / `--write` contract) to grant the
+commit/PR skill tokens and the sentinel forms its guard hooks demand. Skip it
+when git-workflow is not installed — never hand-write another plugin's
+entries.
+
 ### Configure permissions
 
 The setup script wires up every required allow entry in
@@ -163,10 +170,12 @@ the one matching the install channel — for an `npx skills` install:
 "Bash(node .claude/skills/develop-web-feature/scripts/setup.mjs*)"
 ```
 
-or, for the `web-dev` plugin install:
+or, for the `web-dev` plugin install (add the second entry only when the
+git-workflow plugin is installed too, so its own setup can run):
 
 ```json
 "Bash(dwf-setup*)"
+"Bash(gwf-setup*)"
 ```
 
 Add it to `.claude/settings.local.json` once; `setup.mjs` handles everything
