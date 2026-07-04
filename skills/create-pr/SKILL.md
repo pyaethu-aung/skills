@@ -4,7 +4,7 @@ description: Use when creating a GitHub pull request. Derives title and body fro
 metadata:
   version: "1.2.0"
 argument-hint: "[--yes] (skip the confirmation prompt for hands-off runs)"
-allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git branch:*) Bash(git checkout:*) Bash(git push:*) Bash(gh pr:*) Bash(CLAUDE_PR_VIA_SKILL=1 gh pr create:*) Bash(gh repo:*)
+allowed-tools: Bash(git log:*) Bash(git diff:*) Bash(git status:*) Bash(git branch:*) Bash(git checkout:*) Bash(git fetch:*) Bash(git push:*) Bash(gh pr:*) Bash(CLAUDE_PR_VIA_SKILL=1 gh pr create:*) Bash(gh repo:*)
 ---
 
 # PR Creation Rules
@@ -26,18 +26,26 @@ git branch --show-current
 ```
 
 ## Commits not yet on origin's default branch
-```!
-git log origin/$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name')..HEAD --oneline
+
+Run this yourself, substituting the default branch shown above (auto-run
+blocks cannot contain command substitution, so it is not preloaded):
+
+```bash
+git log origin/<default>..HEAD --oneline
 ```
 
-If the log above is empty, stop and tell the user:
+If it errors because `origin/<default>` is unknown locally, run
+`git fetch origin <default>` first and retry.
+
+If the log is empty, stop and tell the user:
 "No commits ahead of origin/<default>. Nothing to open a PR for."
 
 ## Guard: sitting on the default branch
 
 If the current branch (shown above) **is** `<default>` and the commit
-list above is non-empty, the commits were made directly on the default
-branch. Move them to a feature branch before continuing:
+list from the previous section is non-empty, the commits were made
+directly on the default branch. Move them to a feature branch before
+continuing:
 
 1. Derive a semantic branch name from those commits:
    - Use the dominant Conventional Commits type as the prefix
@@ -58,14 +66,17 @@ branch. Move them to a feature branch before continuing:
    git branch -f <default> origin/<default>
    ```
 5. Continue with the rest of the PR creation flow from the new branch.
-   The commit list above still applies: it was measured against
+   The commit list still applies: it was measured against
    `origin/<default>`, which the new branch is still ahead of.
 
 If the current branch is already a feature branch, skip this section.
 
 ## Diff summary
-```!
-git diff origin/$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name')..HEAD --stat
+
+Run this yourself with the same substitution:
+
+```bash
+git diff origin/<default>..HEAD --stat
 ```
 
 ## Recent PRs for style reference
