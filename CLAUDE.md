@@ -19,6 +19,7 @@ Always use this skill when committing or amending. Never run `git commit` direct
 - Enforces atomic commits, Conventional Commits format, and the 50/72 rule
 - Handles amends (message-only amends allowed on a clean tree; warns before rewriting pushed history) and warns when committing directly on `main`/`master`
 - `--yes` skips the confirmation prompts (staging and commit) for hands-off runs; the character-count check still applies, and 51–72 char subjects are auto-shortened to ≤ 50
+- The confirmation dialog itself carries the summary — subject and measured count in the question text, files and full message in the option preview; never a bare "Proceed?"
 - A `PreToolUse` hard gate denies any `git commit` lacking the `CLAUDE_COMMIT_VIA_SKILL=1` token, which only this skill sets, and redirects here
 
 ### `/create-pr`
@@ -67,6 +68,7 @@ Use when adding, building, or designing a new web feature end-to-end.
 - Runs the full loop: shape → build → gate → audit → critique → fix → commit → document → PR, then merge → version-bump → release
 - `--auto` (or "autonomous"/"hands-off" in the request) collapses in-flow confirmations into a single review at the PR; the human gates (PR merge, release publish) still require explicit sign-off
 - Subagent delegation (Phase 0 discovery, Phase 6 doc drafts) uses only built-in agent types (`Explore`, general-purpose) with per-call model overrides; custom agent definitions may ship via `plugins/web-dev/agents/` when actually needed, but the SKILL.md must keep the built-in-type instructions as the baseline — `npx skills` consumers cannot receive agent definitions
+- Ships on two channels: `npx skills` runs the helper scripts by project path, the `web-dev` plugin as `dwf-*` PATH commands; Phase 0 resolves the channel once from the skill's base directory, and each plugin's grants come from its own setup command (`dwf-setup`, `gwf-setup`)
 
 ## Commit conventions
 

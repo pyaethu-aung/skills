@@ -1,6 +1,6 @@
 # skills
 
-A collection of AI agent skills installable via [`npx skills`](https://github.com/vercel-labs/skills).
+A collection of AI agent skills installable individually via [`npx skills`](https://github.com/vercel-labs/skills) or as [Claude Code plugin bundles](#as-claude-code-plugins-toolchain-bundles).
 
 ## Available Skills
 
@@ -14,7 +14,7 @@ Guides Claude through every commit with structure, discipline, and consistency.
 - **Amend support** — amends the last commit under the same rules, allows a message-only amend on a clean tree, and warns before rewriting pushed history
 - **Default-branch warning** — flags commits landing directly on `main`/`master` and offers to create a feature branch first
 - **Autonomous `--yes` mode** — skips the confirmation prompt for hands-off runs: stages inferred files, auto-shortens 51–72 char subjects to ≤ 50, and still enforces the 50/72 check; a human reviews the resulting commits later (e.g. in the PR)
-- **Confirmation prompt** — shows files, character count, and full message before running `git commit` (skipped in `--yes` mode)
+- **Confirmation prompt** — shows files, character count, and full message before running `git commit`, carried inside the interactive dialog itself (question text plus option preview), never only in the chat text (skipped in `--yes` mode)
 
 ### `create-pr`
 
@@ -83,8 +83,8 @@ Guides Claude through building a website feature end-to-end with `/impeccable`, 
 - **Phase 0 permissions setup:** `setup.mjs` wires up every required allow entry in `.claude/settings.local.json`, previewing the delta before writing so a skill update can never widen permissions silently
 - **Project discovery first:** a setup phase reads `CLAUDE.md` / `AGENTS.md` and config to find the gates, feature pattern, enforcement, and design system before any code is written
 - **Cached discovery:** caches the discovery phase's findings to your OS user cache (keyed per repo) and skips rediscovery on later runs, re-deriving only entries whose source changed; the green-baseline gate run always repeats on a clean tree
-- **Seven helper scripts:** `setup.mjs`, `discover.mjs`, `gates.mjs`, `dev-server.mjs`, `critique-plan.mjs`, `cache-check.mjs`, `cache-write.mjs` — drive permissions, discovery, gating, the dev server, and autonomous convergence without raw shell commands
-- **Dependency handling:** installs the required `/impeccable` via `npx impeccable skills install`; treats `/commit-message` and `/create-pr` as optional, with a direct commit/PR fallback when they are absent
+- **Seven helper scripts:** `setup.mjs`, `discover.mjs`, `gates.mjs`, `dev-server.mjs`, `critique-plan.mjs`, `cache-check.mjs`, `cache-write.mjs` — drive permissions, discovery, gating, the dev server, and autonomous convergence without raw shell commands; invoked by project path on the `npx skills` channel and as `dwf-*` PATH commands on the `web-dev` plugin channel
+- **Dependency handling:** installs the required `/impeccable` via `npx impeccable skills install`, with a first-run bootstrap: re-run setup for its grants, then rely on the skill watcher — or hand back for `/reload-skills` / a session restart when `.claude/skills` was created by the install itself; treats `/commit-message`, `/create-pr`, and `/update-readme` as optional, with direct fallbacks when they are absent
 - **Portable:** project specifics live in the discovery phase, so the same skill works across web projects (a worked example is included as illustration only)
 
 | Skill | Description | Recommended model |
@@ -229,6 +229,11 @@ Every pull request that modifies `.claude/hooks/` runs `.github/workflows/lint-h
 ---
 
 ## Claude Code Enforcement
+
+Installing the [`git-workflow` plugin](#as-claude-code-plugins-toolchain-bundles)
+sets up both guards automatically: the hooks ship with the plugin and
+`gwf-setup` writes the allow entries. The manual wiring below is for the
+`npx skills` channel.
 
 ### `commit-message`
 
