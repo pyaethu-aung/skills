@@ -223,6 +223,20 @@ Use the CLI, not a hand copy of the skill file: it installs the design skill
 leaves `/impeccable critique`'s detector failing with "bundled detector not
 found." Do not proceed without `/impeccable`.
 
+**When `/impeccable` is already installed, check for an update** before the
+baseline gate run: read the installed version from
+`.claude/skills/impeccable/SKILL.md`'s frontmatter and compare it with
+`npm view impeccable version` (the latest published release). If they differ,
+update with `npx impeccable@latest skills install`. Phase 0 is the safe
+moment — no audit or critique has run yet, so detector output and scores stay
+consistent within the run; never update mid-loop. Updating an existing skill
+edits files the skill watcher already sees, so no reload or restart is needed
+(only a *first* install has the bootstrap stop above). Fail open: if the
+installed version cannot be determined or the registry is unreachable
+(offline), skip the check and proceed with the installed version — never
+reinstall blindly on every run. In a hands-off run, apply the update without
+pausing; it lands before any evaluation.
+
 **`/commit-message`, `/create-pr`, and `/update-readme` are optional.** They
 standardize commits, PRs, and README updates, but the workflow completes
 without them. If the project has them (or you choose to add them: they are

@@ -147,7 +147,10 @@ const REQUIRED = [
   // permission heuristics never apply).
   ...SCRIPT_GRANTS,
   // The skill's one hard dependency, installed via npx (available under any PM).
+  // The wildcard also covers the pinned update form (npx impeccable@latest …).
   'Bash(npx impeccable*)',
+  // Read-only registry query for the Phase 0 impeccable update check.
+  'Bash(npm view impeccable*)',
   // Spec / fixture directory creation. `mkdir -p` is create-only, never destructive.
   'Bash(mkdir -p *)',
   // Node scripts written to the project cache dir (avoids node -e inline blocks)
