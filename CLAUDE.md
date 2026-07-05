@@ -69,6 +69,7 @@ Use when adding, building, or designing a new web feature end-to-end.
 - `--auto` (or "autonomous"/"hands-off" in the request) collapses in-flow confirmations into a single review at the PR; the human gates (PR merge, release publish) still require explicit sign-off
 - Subagent delegation (Phase 0 discovery, Phase 6 doc drafts) uses only built-in agent types (`Explore`, general-purpose) with per-call model overrides; custom agent definitions may ship via `plugins/web-dev/agents/` when actually needed, but the SKILL.md must keep the built-in-type instructions as the baseline — `npx skills` consumers cannot receive agent definitions
 - Ships on two channels: `npx skills` runs the helper scripts by project path, the `web-dev` plugin as `dwf-*` PATH commands; Phase 0 resolves the channel once from the skill's base directory, and each plugin's grants come from its own setup command (`dwf-setup`, `gwf-setup`)
+- Setup grants follow least privilege: only read-only, staging (`git add` / `git restore --staged`), and branch-creation git is pre-approved; `git push`, `git rm`, and `git reset` are never auto-granted and prompt when needed
 
 ## Commit conventions
 
