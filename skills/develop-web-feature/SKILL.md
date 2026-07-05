@@ -134,7 +134,13 @@ When the allow list is already complete the dry run reports nothing to do and
 exits 0; when grants would change it lists only the *new* entries and exits
 non-zero, so a skill update can never widen your permissions silently. In a
 hands-off run, surface that delta and confirm before `--write` whenever it is
-non-empty; the steady-state case (no delta) needs no pause.
+non-empty; the steady-state case (no delta) needs no pause. **Surface the
+delta as the complete entry list, verbatim** — every `+` line the dry run
+printed, never a count or paraphrase. Print it as chat text (the canonical
+full view; confirmation dialogs are size-limited) and carry it in the
+confirmation dialog too, noting "full list in chat above" when it may not
+fit. The same rule applies to any other plugin's setup command (e.g.
+`gwf-setup`).
 
 By default it grants no file-edit permission, so edits still prompt. Pass
 `--grant-edits` (off by default) to also auto-approve `Edit` / `Write` /
