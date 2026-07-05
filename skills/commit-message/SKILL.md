@@ -217,13 +217,17 @@ Proposed message:
 Proceed? (yes / edit message / cancel)
 ```
 
-**The confirmation dialog must carry the summary itself.** When the harness
-renders this pause as an interactive question (e.g. Claude Code's
-AskUserQuestion dialog), the user may see only the dialog, not the chat text
-before it. Never ask a bare "Proceed with this commit?": put the subject line
-and its measured character count in the question text, and attach the file
-list and full commit message as the confirm option's preview so they are
-visible inside the dialog itself.
+**Show the summary in both surfaces — chat text AND the dialog.** First print
+the full summary block above as a normal chat message: interactive dialogs
+are size-limited, so a long commit body can be truncated inside them, and the
+chat text is the only place the user can always read the complete message.
+Then, when the harness renders the pause as an interactive question (e.g.
+Claude Code's AskUserQuestion dialog), the dialog must still carry the
+essentials itself, because the user may look only at the dialog: put the
+subject line and its measured character count in the question text, and the
+file list plus commit message in the confirm option's preview — noting "full
+message in chat above" when the body may not fit. Never ask a bare "Proceed
+with this commit?".
 
 - **yes**: run the commit with the skill token the PreToolUse guard requires,
   using a heredoc to preserve line breaks:
