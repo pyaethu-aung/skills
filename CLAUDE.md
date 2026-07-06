@@ -45,13 +45,16 @@ Use when implementing or updating database schema.
 
 - Generates goose migration files and optionally GORM model structs for PostgreSQL tables
 - Discovers existing migration layout before generating anything
+- Accepts `[--yes]` to skip the final confirmation for hands-off runs; ambiguous-choice questions (unknown PG version, unsanctioned cascades) still ask
 
 ### `/test-api`
 
 Use when testing API endpoints against an OpenAPI/Swagger specification.
 
-- Accepts an optional OpenAPI doc URL or file path as an argument
+- Accepts an optional OpenAPI doc URL or file path, plus an optional second argument overriding the target base URL (test a local server against a spec that advertises a deployed one)
 - Discovers or loads the spec, executes requests, and validates responses
+- Read-only by default; `--yes` runs hands-off (read-only), and `--yes --all` also runs mutating endpoints without pausing but only against a local target — non-local mutating tests always stay interactive
+- Credentials never appear on a curl command line; they pass via a gitignored `.cache/test-api/headers` file, deleted after the run
 
 ### `/test-design`
 
