@@ -24,6 +24,13 @@ PLUGIN_PATHS = {
         "skills/develop-web-feature/",
         "skills/update-readme/",
     ],
+    "go-dev": [
+        "plugins/go-dev/",
+        "skills/develop-go-feature/",
+        "skills/test-api/",
+        "skills/postgres-scaffold/",
+        "skills/update-readme/",
+    ],
 }
 MARKETPLACE = ".claude-plugin/marketplace.json"
 
