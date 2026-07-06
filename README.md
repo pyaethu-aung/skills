@@ -228,6 +228,10 @@ Every pull request targeting `main` runs
   `version` must change in both `plugin.json` and `marketplace.json`
 - The two manifests must agree on the version
 - A plugin absent from the base ref (its first release) is exempt
+- A skill bundled by more than one plugin gates all of them: editing
+  `update-readme` requires bumping both `web-dev` and `go-dev` in the same PR.
+  This coupling is deliberate — every plugin that ships the skill must
+  re-release for its users to receive the change
 
 Without this, a skill edit would silently never reach plugin users, because
 plugin updates are delivered only on a version bump.
