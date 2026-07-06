@@ -87,10 +87,26 @@ Guides Claude through building a website feature end-to-end with `/impeccable`, 
 - **Dependency handling:** installs the required `/impeccable` via `npx impeccable skills install`, with a first-run bootstrap: re-run setup for its grants, then rely on the skill watcher — or hand back for `/reload-skills` / a session restart when `.claude/skills` was created by the install itself; on later runs checks npm for a newer impeccable at Phase 0 and updates before the baseline (fail-open: skipped when offline; never mid-loop); treats `/commit-message`, `/create-pr`, and `/update-readme` as optional, with direct fallbacks when they are absent
 - **Portable:** project specifics live in the discovery phase, so the same skill works across web projects (a worked example is included as illustration only)
 
+### `develop-go-feature`
+
+Guides Claude through building a Go backend feature end-to-end, from plan to a published release.
+
+- **Full lifecycle loop:** learn, plan (contract first), implement, gate, verify (contract + review), fix, commit, document, PR — then merge, version, tag, and release — iterating the gate/verify → fix cycle until no P0/P1 findings remain
+- **Contract-first planning:** the OpenAPI doc leads the code (or the plan drafts the intended contract when annotations generate the doc), and schema work routes through `/postgres-scaffold`
+- **Merge-blocking gates:** `go build ./...`, `go vet ./...`, `go test -race ./...`, `golangci-lint run` when the project has a config (config present but binary missing fails, not skips), a coverage threshold with `--coverage` when one is pinned, and the integration/e2e suite with `--e2e`
+- **Contract verification:** starts the service with the lifecycle helper (`server.mjs start|url|stop`) and runs `/test-api` against the discovered OpenAPI doc, plus a structured diff review (error taxonomy, context propagation, race hygiene, SQL parameterization, authz, log hygiene) and an advisory `govulncheck` pass with `--vuln`
+- **Docker-prescribed testing:** when the project's docs (or the user) say tests run through Docker, the docker-based commands are pinned in `.cache/develop-go-feature/gates.json` and run inside the gate runner — no standing docker grant needed
+- **Autonomous `--auto` mode:** collapses in-flow confirmations into a single review at the PR; still stops for the human gates (PR merge, release publish), and deferred P2 findings surface in the PR body
+- **Phase 0 permissions setup:** `setup.mjs` wires up every required allow entry in `.claude/settings.local.json`, previewing the delta before writing; grants follow least privilege — `git push`, `git rm`, `git reset`, bare `rm`, and docker commands are never auto-granted
+- **Cached discovery:** caches the Phase 0 baseline per repo and skips rediscovery on later runs; the green-baseline gate run always repeats on a clean tree
+- **Six helper scripts:** `setup.mjs`, `discover.mjs`, `gates.mjs`, `server.mjs`, `cache-check.mjs`, `cache-write.mjs` — invoked by project path on the `npx skills` channel and as `dgf-*` PATH commands on the `go-dev` plugin channel
+- **Portable:** project specifics (gates, module layout, OpenAPI doc location, Docker policy) live in the discovery phase, so the same skill works across Go services
+
 | Skill | Description | Recommended model |
 |---|---|---|
 | [`commit-message`](skills/commit-message/SKILL.md) | Enforces atomic commits, the 50/72 subject/body rule, and Conventional Commits format | `haiku` |
 | [`create-pr`](skills/create-pr/SKILL.md) | Derives PR title and body from commits, enforces a consistent format, and confirms before submitting | `haiku` |
+| [`develop-go-feature`](skills/develop-go-feature/SKILL.md) | Builds a Go backend feature end-to-end: plan the contract, implement, gate, verify against the OpenAPI doc, fix, PR, release | `opus` |
 | [`develop-web-feature`](skills/develop-web-feature/SKILL.md) | Builds a web feature end-to-end with /impeccable: shape, build, gate, audit, critique, fix, PR, release | `opus` |
 | [`postgres-scaffold`](skills/postgres-scaffold/SKILL.md) | Generates goose migration files and optionally GORM model structs for PostgreSQL tables | `sonnet` |
 | [`test-api`](skills/test-api/SKILL.md) | Tests API endpoints against an OpenAPI/Swagger specification | `sonnet` |
@@ -108,17 +124,19 @@ installs the same skill twice under different names.
 
 ### As Claude Code plugins (toolchain bundles)
 
-The repo is a plugin marketplace with two cohesion-grouped plugins:
+The repo is a plugin marketplace with three cohesion-grouped plugins:
 
 | Plugin | Contents |
 |---|---|
 | `git-workflow` | `commit-message` + `create-pr` skills, the PreToolUse hard-gate hooks that enforce them (no manual `settings.json` wiring needed), and the `gwf-setup` permission-setup command |
 | `web-dev` | `develop-web-feature` + `update-readme` skills, plus `dwf-*` helper commands on the PATH |
+| `go-dev` | `develop-go-feature` + `test-api` + `postgres-scaffold` + `update-readme` skills, plus `dgf-*` helper commands on the PATH |
 
 ```
 /plugin marketplace add pyaethu-aung/skills
 /plugin install git-workflow@pyaethu-aung-skills
 /plugin install web-dev@pyaethu-aung-skills
+/plugin install go-dev@pyaethu-aung-skills
 ```
 
 Plugin skills are namespaced: `/git-workflow:commit-message`,
@@ -127,17 +145,20 @@ bumps. The plugin directories symlink to `skills/` and `.claude/hooks/`, so
 there is a single source of truth; the plugin installer dereferences the
 symlinks at install time.
 
-`develop-web-feature`'s helper scripts work on both channels: the `npx skills`
-install runs them by project path
-(`node .claude/skills/develop-web-feature/scripts/<name>.mjs`), while the
-`web-dev` plugin ships `dwf-*` wrapper commands (`dwf-setup`, `dwf-gates`, …)
-that join the PATH while the plugin is enabled. `setup.mjs` detects which
-channel it is running from and writes the matching permission grants and
-`Skill()` token forms, so hands-off runs work unattended on either channel.
+`develop-web-feature`'s and `develop-go-feature`'s helper scripts work on both
+channels: the `npx skills` install runs them by project path
+(`node .claude/skills/develop-web-feature/scripts/<name>.mjs`, likewise for
+`develop-go-feature`), while the `web-dev` plugin ships `dwf-*` wrapper
+commands (`dwf-setup`, `dwf-gates`, …) and the `go-dev` plugin ships `dgf-*`
+ones (`dgf-setup`, `dgf-gates`, `dgf-server`, …) that join the PATH while the
+plugin is enabled. Each skill's `setup.mjs` detects which channel it is
+running from and writes the matching permission grants and `Skill()` token
+forms, so hands-off runs work unattended on either channel.
 
 Each plugin owns its own grants: `dwf-setup` writes only `web-dev`'s entries,
-and `git-workflow` ships its own `gwf-setup` (same dry-run / `--write`
-contract) for its skill tokens and the sentinel forms its guard hooks demand.
+`dgf-setup` only `go-dev`'s, and `git-workflow` ships its own `gwf-setup`
+(same dry-run / `--write` contract) for its skill tokens and the sentinel
+forms its guard hooks demand.
 
 ### Individual skills (`npx skills`)
 
@@ -146,6 +167,7 @@ Install a specific skill into your project:
 ```bash
 npx skills add pyaethu-aung/skills --skill commit-message
 npx skills add pyaethu-aung/skills --skill create-pr
+npx skills add pyaethu-aung/skills --skill develop-go-feature
 npx skills add pyaethu-aung/skills --skill develop-web-feature
 npx skills add pyaethu-aung/skills --skill postgres-scaffold
 npx skills add pyaethu-aung/skills --skill test-api
@@ -158,6 +180,7 @@ Install globally:
 ```bash
 npx skills add pyaethu-aung/skills --skill commit-message --global
 npx skills add pyaethu-aung/skills --skill create-pr --global
+npx skills add pyaethu-aung/skills --skill develop-go-feature --global
 npx skills add pyaethu-aung/skills --skill develop-web-feature --global
 npx skills add pyaethu-aung/skills --skill postgres-scaffold --global
 npx skills add pyaethu-aung/skills --skill test-api --global
