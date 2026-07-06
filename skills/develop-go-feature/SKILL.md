@@ -49,6 +49,12 @@ collapse those into a single review at the PR:
   and docs still prompt). The scoped grant is narrower than accept-edits mode
   but persists across sessions, so it is opt-in; pick per your trust
   preference.
+- **Route the companion skills through their hands-off forms.** Schema work
+  runs as `/postgres-scaffold --yes` (its design rules and
+  ambiguous-choice questions still apply). The Phase 4 contract run is
+  `/test-api --yes <doc> <local url>` — read-only; add `--all` to also
+  exercise mutating endpoints without pausing, which test-api honors only
+  when the target base URL is local, exactly the Phase 4 setup.
 - **Commit and open the PR without prompting:** route through
   `/commit-message --yes` and `/create-pr --yes` (same format and skill token,
   no confirmation pause). Opening the PR is **not optional**: never stop
@@ -405,9 +411,12 @@ service honors its contract.
    (`{"command": "...", "url": "...", "health": "/healthz"}`), including a
    compose-based command when the service itself runs in Docker.
 2. **Contract test against the OpenAPI doc.** Run `/test-api` with the doc
-   discovered in Phase 0 and the URL from `server.mjs url`. It executes
-   read-only endpoints by default and confirms before anything mutating —
-   run mutating endpoints only against a local/dev environment, never shared
+   discovered in Phase 0 as the spec source and the URL from `server.mjs url`
+   as the target base URL override (so the spec's `servers` entry — often a
+   deployed environment — is never hit by mistake). It executes read-only
+   endpoints by default and confirms before anything mutating; in a hands-off
+   run use `--yes` (and `--all` to cover mutating endpoints, which test-api
+   honors only against a local target). Never point mutating tests at shared
    infrastructure. Every endpoint this feature added or changed must be
    exercised and must match the doc: status codes, response shapes, error
    bodies. When the project has its own contract-test target
