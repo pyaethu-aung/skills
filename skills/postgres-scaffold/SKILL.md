@@ -2,7 +2,8 @@
 name: postgres-scaffold
 description: Use when implementing or updating database schema. Generates goose migration files and optionally GORM model structs for PostgreSQL tables.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
+argument-hint: "[--yes] (skip the confirmation prompt for hands-off runs)"
 allowed-tools: Bash(find:*) Bash(ls:*) Bash(date:*) Bash(echo:*) Bash(grep:*) Bash(head:*) Glob Read Write Edit
 ---
 
@@ -327,7 +328,8 @@ type Order struct {
 
 ## 10. Confirm before writing
 
-After designing the schema, pause and show the user:
+After designing the schema, pause and show the user (skip the pause if
+`--yes` was passed; see the autonomous-mode note below):
 
 ```
 Table:      <table_name>
@@ -351,4 +353,13 @@ Proceed? (yes / edit / cancel)
 - **edit** — ask what to change, revise, and show the summary again
 - **cancel** — stop without writing anything
 
-Do not write any files until the user explicitly confirms.
+Do not write any files until the user explicitly confirms, unless `--yes`
+was passed.
+
+**Autonomous mode (`--yes`).** Print the summary above, then write the files
+directly; sections 1–9 still apply in full, including their ask-the-user
+rules for genuinely ambiguous choices (unknown PostgreSQL version, missing
+migrations directory, a cascade the user has not sanctioned) — `--yes` skips
+the final confirmation, not those decisions. This is for hands-off runs where
+a human reviews the result later (for example in the PR); do not pass `--yes`
+for one-off scaffolds.
