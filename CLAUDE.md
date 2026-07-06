@@ -6,8 +6,8 @@
 - `.claude/skills/<name>` — local copy of the skill for Claude Code to use; may differ from source (e.g. extra `model` field)
 - `.claude/hooks/` — guard scripts that enforce skill usage
 - `.claude/settings.json` — PreToolUse hooks wiring the guards
-- `.claude-plugin/marketplace.json` — plugin marketplace manifest listing the `git-workflow` and `web-dev` plugins
-- `plugins/<name>/` — plugin roots; their `skills/` and `hooks/` script entries are **symlinks** into `skills/` and `.claude/hooks/` (single source of truth; the plugin installer dereferences them), plus a `.claude-plugin/plugin.json` manifest and, for `git-workflow`, a `hooks/hooks.json`; `web-dev` also ships `bin/dwf-*` wrappers so the develop-web-feature helper scripts have stable, path-independent commands on the plugin channel, and `git-workflow` ships `bin/gwf-setup` + `scripts/setup.mjs` for its own permission grants — each plugin owns its own scripts and grants, never another plugin's
+- `.claude-plugin/marketplace.json` — plugin marketplace manifest listing the `git-workflow`, `web-dev`, and `go-dev` plugins
+- `plugins/<name>/` — plugin roots; their `skills/` and `hooks/` script entries are **symlinks** into `skills/` and `.claude/hooks/` (single source of truth; the plugin installer dereferences them), plus a `.claude-plugin/plugin.json` manifest and, for `git-workflow`, a `hooks/hooks.json`; `web-dev` ships `bin/dwf-*` wrappers and `go-dev` ships `bin/dgf-*` wrappers so their workflow skills' helper scripts have stable, path-independent commands on the plugin channel, and `git-workflow` ships `bin/gwf-setup` + `scripts/setup.mjs` for its own permission grants — each plugin owns its own scripts and grants, never another plugin's
 - `.githooks/commit-msg` — git hook enforcing Conventional Commits on manual commits
 
 ## Skills
@@ -70,6 +70,18 @@ Use when adding, building, or designing a new web feature end-to-end.
 - Subagent delegation (Phase 0 discovery, Phase 6 doc drafts) uses only built-in agent types (`Explore`, general-purpose) with per-call model overrides; custom agent definitions may ship via `plugins/web-dev/agents/` when actually needed, but the SKILL.md must keep the built-in-type instructions as the baseline — `npx skills` consumers cannot receive agent definitions
 - Ships on two channels: `npx skills` runs the helper scripts by project path, the `web-dev` plugin as `dwf-*` PATH commands; Phase 0 resolves the channel once from the skill's base directory, and each plugin's grants come from its own setup command (`dwf-setup`, `gwf-setup`)
 - Setup grants follow least privilege: only read-only, staging (`git add` / `git restore --staged`), and branch-creation git is pre-approved; `git push`, `git rm`, and `git reset` are never auto-granted and prompt when needed
+
+### `/develop-go-feature`
+
+Use when adding or building a Go backend feature or endpoint end-to-end.
+
+- Accepts `[--auto]` and a feature description as arguments (e.g. `Vehicle telemetry ingestion endpoint`)
+- Runs the full loop: learn → plan (contract first) → implement → gate → verify → fix → commit → document → PR, then merge → version → release
+- Gates: `go build` / `go vet` / `go test -race`, `golangci-lint` when configured, coverage threshold and integration/e2e when pinned; when the project's docs prescribe testing through Docker, the docker-based commands are pinned in `.cache/develop-go-feature/gates.json` and run inside the gate runner (no standing docker grant)
+- Verify phase starts the service via `server.mjs` and contract-tests it against the OpenAPI doc with `/test-api`; schema work routes through `/postgres-scaffold`
+- `--auto` collapses in-flow confirmations into a single review at the PR; the human gates (PR merge, release publish) still require explicit sign-off
+- Ships on two channels: `npx skills` runs the helper scripts by project path, the `go-dev` plugin as `dgf-*` PATH commands; Phase 0 resolves the channel once from the skill's base directory, and grants come from `dgf-setup` (plus `gwf-setup` when git-workflow is installed)
+- Setup grants follow the same least-privilege stance as `/develop-web-feature`; docker commands are additionally never auto-granted
 
 ## Commit conventions
 
