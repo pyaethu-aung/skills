@@ -2,9 +2,9 @@
 name: test-api
 description: Use when testing API endpoints against an OpenAPI/Swagger specification. Discovers or loads the spec, executes requests against each endpoint, and validates responses.
 metadata:
-  version: "1.0.0"
-argument-hint: [optional OpenAPI doc URL or file path]
-allowed-tools: Bash(find:*) Bash(curl:*) Bash(grep:*) Bash(ls:*) Bash(echo:*) Read WebFetch
+  version: "1.1.0"
+argument-hint: "[--yes] [--all] [OpenAPI doc URL or file path] [target base URL]"
+allowed-tools: Bash(find:*) Bash(curl:*) Bash(grep:*) Bash(ls:*) Bash(echo:*) Bash(sleep:*) Bash(rm -f .cache/test-api/*) Read Write WebFetch
 ---
 
 # API Test Rules
@@ -13,17 +13,26 @@ Follow these rules when testing APIs against an OpenAPI specification.
 
 ## Arguments
 
-If the user passed a URL or file path when invoking this skill
-(e.g. `/test-api https://api.example.com/openapi.json` or `/test-api ./docs/openapi.yaml`),
-use it as the API specification source.
+Parse the invocation arguments:
 
-If no argument was provided, search the project for API documentation.
+- `--yes` — autonomous mode: skip the pre-flight pause (see Step 3)
+- `--all` — include mutating endpoints; fully honored only against a local
+  target (see Step 3)
+- The **first non-flag argument** is the spec source
+  (e.g. `/test-api https://api.example.com/openapi.json` or
+  `/test-api ./docs/openapi.yaml`)
+- The **second non-flag argument** is a target base URL override: requests go
+  there instead of the spec's `servers` entry
+  (e.g. `/test-api api/openapi.yaml http://localhost:8080` to test a locally
+  running service whose spec advertises a deployed URL)
+
+If no spec source was provided, search the project for API documentation.
 
 ---
 
 ## Step 1: Locate the API specification
 
-### If an argument was provided
+### If a spec source was provided
 
 - If it starts with `http://` or `https://`, fetch it via WebFetch
 - If it's a file path, read it with the Read tool
@@ -55,12 +64,18 @@ From the spec, extract:
 
 - **Version**: OpenAPI 3.x (`openapi:` field) or Swagger 2.x (`swagger:` field)
 - **Base URL**:
-  - OpenAPI 3.x: `servers[0].url`
-  - Swagger 2.x: combine `host` + `basePath` + `schemes[0]`
+  - A target base URL override argument always wins when one was passed
+  - Otherwise OpenAPI 3.x: `servers[0].url`
+  - Otherwise Swagger 2.x: combine `host` + `basePath` + `schemes[0]`
 - **Endpoints**: every path + HTTP method combination
 - **Operations**: for each endpoint, its `operationId`, parameters, request body schema, and expected response codes/schemas
 
-If the base URL contains template variables (e.g. `https://{host}`) or is a localhost address, ask the user to confirm or override it before continuing.
+A base URL is **local** when its host is `localhost`, `127.0.0.1`, `::1`, or
+`0.0.0.0`; everything else is a shared environment, and the mutating-endpoint
+rules below treat it accordingly.
+
+If the resolved base URL contains template variables (e.g. `https://{host}`),
+ask the user to fill them in (or pass an override) before continuing.
 
 ---
 
@@ -96,7 +111,23 @@ Options:
   cancel            — stop
 ```
 
-Do not run any requests until the user responds.
+Do not run any requests until the user responds (unless `--yes` was passed;
+see below).
+
+**Autonomous mode (`--yes`).** Print the summary above, then proceed without
+pausing:
+
+- **Read-only endpoints always run.** This is the safe default on any target.
+- **Mutating endpoints run only with `--all` AND a local base URL** (as
+  defined in Step 2) — a fully autonomous run against your own machine,
+  including `POST`/`PUT`/`PATCH`/`DELETE` with no per-request confirmation.
+- **Against a non-local target, `--all` is ignored:** mutating endpoints are
+  skipped and listed as warnings. Testing them against shared infrastructure
+  always requires an interactive run and its confirmations.
+- **Auth:** if the spec declares a security scheme and no credential was
+  provided beforehand, proceed unauthenticated; report auth-rejected
+  endpoints (401/403) as warnings with a hint to re-run with configured
+  auth, not as plain failures.
 
 ---
 
@@ -105,8 +136,18 @@ Do not run any requests until the user responds.
 If the spec declares a security scheme or the user chose "configure auth":
 
 - Ask for the required credential (token, API key, etc.)
-- Store it only in memory for this session — never log it or embed it in output shown to the user
-- Apply it as a header on all subsequent requests (e.g. `Authorization: Bearer <token>`)
+- Never log it or embed it in output shown to the user
+- **Never place the raw credential in a Bash command line** — it would land
+  in the session transcript, shell history, and process list. Instead, write
+  the header line to `.cache/test-api/headers` with the Write tool:
+  ```
+  Authorization: Bearer <token>
+  ```
+  and make sure `.cache/test-api/` is listed in `.gitignore` first (add the
+  entry if missing, before the file exists)
+- Pass it to curl with `-H @.cache/test-api/headers` on all subsequent
+  requests
+- Delete the file when testing completes: `rm -f .cache/test-api/headers`
 
 ---
 
@@ -130,7 +171,7 @@ curl -s -w "\n%{http_code}" \
   -X <METHOD> \
   -H "Accept: application/json" \
   [-H "Content-Type: application/json"] \
-  [-H "Authorization: <scheme> <credential>"] \
+  [-H @.cache/test-api/headers] \
   [-d '<minimal valid request body>'] \
   "<base_url><resolved_path>[?<query_params>]"
 ```
@@ -139,7 +180,10 @@ For `POST`, `PUT`, and `PATCH`, build a minimal valid request body from the spec
 - Include all `required` fields with example or default values
 - Omit optional fields
 
-For `DELETE` endpoints: pause and ask the user to confirm before running, even if "include mutating" was selected.
+For `DELETE` endpoints: pause and ask the user to confirm before running,
+even if "include mutating" was selected — except in an autonomous
+`--yes --all` run against a local base URL, where DELETE runs like any other
+mutating endpoint (Step 3).
 
 ### 5c. Validate the response
 
@@ -184,8 +228,8 @@ One line per endpoint in the summary. Expand only failures. Keep warnings groupe
 
 ## Constraints
 
-- **Read-only by default** — do not run mutating methods without explicit user confirmation
-- **No destructive defaults** — confirm individually before each `DELETE`
-- **No secrets in output** — never print auth tokens, API keys, or passwords in any command or result shown to the user; redact them as `<redacted>`
+- **Read-only by default** — do not run mutating methods without explicit user confirmation; the only exception is an autonomous `--yes --all` run against a local base URL (Step 3)
+- **No destructive defaults** — confirm individually before each `DELETE` outside that local autonomous exception
+- **No secrets in output or command lines** — never print auth tokens, API keys, or passwords in any command or result shown to the user (redact them as `<redacted>`), and pass credentials to curl only via the `-H @.cache/test-api/headers` file, never inline
 - **No side-effect assumptions** — when testing `POST`/`PUT`/`PATCH`, note that the test may create or modify real data and inform the user
-- **Respect rate limits** — if the spec documents rate limits or the server returns `429`, add a 1-second pause between requests and note it in the output
+- **Respect rate limits** — if the spec documents rate limits or the server returns `429`, add a 1-second pause (`sleep 1`) between requests and note it in the output
