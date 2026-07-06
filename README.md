@@ -43,10 +43,11 @@ Guides Claude through updating or creating README.md after any change worth docu
 Tests API endpoints against an OpenAPI/Swagger specification.
 
 - **Auto-discovery** — searches the project for `openapi.yaml`, `openapi.yml`, `openapi.json`, `swagger.*` files when no argument is provided
-- **Optional argument** — accepts a URL or file path directly: `/test-api https://api.example.com/openapi.json`
+- **Optional arguments** — accepts a spec URL or file path, plus a target base URL override: `/test-api ./api/openapi.yaml http://localhost:8080` tests a locally running service even when the spec's `servers` entry points at a deployed environment
 - **Read-only by default** — only runs `GET` and `HEAD` requests; mutating methods (`POST`, `PUT`, `PATCH`, `DELETE`) require explicit confirmation
+- **Autonomous `--yes` mode** — skips the pre-flight pause and runs read-only endpoints hands-off; adding `--all` also runs mutating endpoints (including `DELETE`) without pausing, honored **only when the target base URL is local** — against anything non-local, mutating tests always stay interactive
 - **Response validation** — checks status codes, Content-Type headers, and required top-level fields against the spec schema
-- **Auth support** — prompts for Bearer token or API key when the spec declares a security scheme
+- **Auth support** — prompts for Bearer token or API key when the spec declares a security scheme; the credential is passed to curl via a gitignored `.cache/test-api/headers` file (never inline on a command line) and deleted after the run
 - **Pre-flight summary** — lists all endpoints to test and confirms before making any request
 
 ### `test-design`
@@ -71,6 +72,7 @@ Guides Claude through implementing or updating PostgreSQL database schema.
 - **Schema conventions** — snake_case plural table names, standard audit columns (`created_at`, `updated_at`, `deleted_at`, `created_by`, `updated_by`), FK actions, soft-delete partial indexes
 - **Optional GORM models** — generates only when the project uses GORM; uses a custom `Base`/`AuditBase` struct instead of `gorm.Model`
 - **Confirmation prompt** — shows the full schema plan before writing any files
+- **Autonomous `--yes` mode** — skips the final confirmation for hands-off runs; the design rules and ambiguous-choice questions (unknown PostgreSQL version, unsanctioned cascades) still apply
 
 ### `develop-web-feature`
 
