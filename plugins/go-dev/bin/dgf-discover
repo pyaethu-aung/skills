@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# go-dev plugin wrapper: runs the develop-go-feature helper script from the
+# plugin root, so permission grants can be path-independent (Bash(dgf-discover*)).
+exec node "$(dirname "$0")/../skills/develop-go-feature/scripts/discover.mjs" "$@"

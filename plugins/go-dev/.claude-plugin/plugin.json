@@ -1,0 +1,12 @@
+{
+  "name": "go-dev",
+  "displayName": "Go Dev",
+  "version": "1.0.0",
+  "description": "End-to-end Go backend feature development: the /develop-go-feature plan-implement-verify workflow plus its /test-api, /postgres-scaffold, and /update-readme companions",
+  "author": {
+    "name": "Pyae Thu Aung"
+  },
+  "repository": "https://github.com/pyaethu-aung/skills",
+  "license": "MIT",
+  "keywords": ["go", "backend", "api", "workflow", "documentation"]
+}
