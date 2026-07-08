@@ -78,6 +78,21 @@ Guides Claude through implementing or updating PostgreSQL database schema.
 
 Guides Claude through building a website feature end-to-end with `/impeccable`, from idea to a published release.
 
+```mermaid
+flowchart TD
+    L["Phase 0: Learn<br/>setup + discover"] --> S["Phase 1: Shape<br/>/impeccable craft"]
+    S --> B["Phase 2: Build<br/>+ e2e specs"]
+    B --> G["Phase 3: Gate<br/>test · lint · build"]
+    G --> E["Phase 4: Evaluate<br/>audit + critique"]
+    E -->|P0/P1 findings| F["Phase 5: Fix"]
+    F --> G
+    E -->|clean, score plateaus| C["Phase 6: Commit → Docs → PR"]
+    C --> PR(["PR open (stop here)"])
+    PR -. "human gate: approve + merge" .-> M["Phase 7: Merge feature PR"]
+    M --> Vb["Version-bump PR → merge"]
+    Vb -. "human gate: publish" .-> R["Tag + Release (deploys)"]
+```
+
 - **Full lifecycle loop:** shape, build, write e2e specs, gate, audit, critique, fix, commit, document, PR — then merge, version-bump, tag, and release — iterating `/impeccable audit` and `/impeccable critique` until the score plateaus
 - **Autonomous `--auto` mode:** collapses in-flow confirmations (scope, critique's hand-back) into a single review at the PR, using `critique-plan.mjs` to keep the fix loop converging non-interactively; still stops for the human gates (PR merge, release publish)
 - **Subagent delegation and model tiering:** under Claude Code, offloads the Phase 0 discovery reading to a read-only small-model subagent and drafts Phase 6 README / CLAUDE.md updates in parallel small-model subagents, keeping bulky reading out of the main context; the audit subagent stays on the session model, and critique always runs in the foreground (its internal fan-out cannot nest)
@@ -92,6 +107,21 @@ Guides Claude through building a website feature end-to-end with `/impeccable`, 
 ### `develop-go-feature`
 
 Guides Claude through building a Go backend feature end-to-end, from plan to a published release.
+
+```mermaid
+flowchart TD
+    L["Phase 0: Learn<br/>setup + discover"] --> P["Phase 1: Plan<br/>contract first"]
+    P --> I["Phase 2: Implement<br/>+ tests"]
+    I --> G["Phase 3: Gate<br/>build · vet · race · lint"]
+    G --> V["Phase 4: Verify<br/>contract + review"]
+    V -->|P0/P1 findings| F["Phase 5: Fix"]
+    F --> G
+    V -->|clean| C["Phase 6: Commit → Docs → PR"]
+    C --> PR(["PR open (stop here)"])
+    PR -. "human gate: approve + merge" .-> M["Phase 7: Merge feature PR"]
+    M --> Vb["Version bump"]
+    Vb -. "human gate: publish" .-> R["Tag + Release"]
+```
 
 - **Full lifecycle loop:** learn, plan (contract first), implement, gate, verify (contract + review), fix, commit, document, PR — then merge, version, tag, and release — iterating the gate/verify → fix cycle until no P0/P1 findings remain
 - **Contract-first planning:** the OpenAPI doc leads the code (or the plan drafts the intended contract when annotations generate the doc), and schema work routes through `/postgres-scaffold`
