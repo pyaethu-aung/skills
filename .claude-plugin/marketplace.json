@@ -1,6 +1,6 @@
 {
   "name": "pyaethu-aung-skills",
-  "description": "AI agent skills grouped into installable toolchains: git commit/PR discipline with enforcement hooks, end-to-end web feature development, and end-to-end Go backend feature development",
+  "description": "AI agent skills grouped into installable toolchains: git commit/PR discipline with enforcement hooks, end-to-end web feature development, end-to-end Go backend feature development, and end-to-end SwiftUI iOS feature development",
   "owner": {
     "name": "Pyae Thu Aung"
   },
@@ -21,6 +21,12 @@
       "name": "go-dev",
       "source": "./plugins/go-dev",
       "description": "End-to-end Go backend feature development: the /develop-go-feature plan-implement-verify workflow plus its /test-api, /postgres-scaffold, and /update-readme companions",
+      "version": "1.0.0"
+    },
+    {
+      "name": "ios-dev",
+      "source": "./plugins/ios-dev",
+      "description": "End-to-end SwiftUI iOS feature development: the /develop-ios-feature build-gate-critique workflow driven through the iOS Simulator, plus its /update-readme companion",
       "version": "1.0.0"
     }
   ]
