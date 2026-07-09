@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# ios-dev plugin wrapper: runs the develop-ios-feature helper script from the
+# plugin root, so permission grants can be path-independent (Bash(dif-discover*)).
+exec node "$(dirname "$0")/../skills/develop-ios-feature/scripts/discover.mjs" "$@"
