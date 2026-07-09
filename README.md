@@ -134,11 +134,41 @@ flowchart TD
 - **Six helper scripts:** `setup.mjs`, `discover.mjs`, `gates.mjs`, `server.mjs`, `cache-check.mjs`, `cache-write.mjs` — invoked by project path on the `npx skills` channel and as `dgf-*` PATH commands on the `go-dev` plugin channel
 - **Portable:** project specifics (gates, module layout, OpenAPI doc location, Docker policy) live in the discovery phase, so the same skill works across Go services
 
+### `develop-ios-feature`
+
+Guides Claude through building a SwiftUI iOS feature end-to-end, from shape to a published release. Requires macOS with full Xcode.
+
+```mermaid
+flowchart TD
+    L["Phase 0: Learn<br/>setup + discover"] --> S["Phase 1: Shape<br/>views · state · a11y"]
+    S --> B["Phase 2: Build<br/>+ previews + tests"]
+    B --> G["Phase 3: Gate<br/>build · test · lint"]
+    G --> E["Phase 4: Evaluate<br/>simulator critique + audit"]
+    E -->|P0/P1 findings| F["Phase 5: Fix"]
+    F --> G
+    E -->|clean, score plateaus| C["Phase 6: Commit → Docs → PR"]
+    C --> PR(["PR open (stop here)"])
+    PR -. "human gate: approve + merge" .-> M["Phase 7: Merge feature PR"]
+    M --> Vb["Version bump"]
+    Vb -. "human gate: publish" .-> R["Tag + Release"]
+```
+
+- **Full lifecycle loop:** learn, shape (views, state ownership, UI states, accessibility plan), build with previews and tests, gate, evaluate (simulator critique + code audit), fix, commit, document, PR — then merge, version, tag, and release — iterating the gate/evaluate → fix cycle until no P0/P1 findings remain
+- **Simulator-driven critique, physical device opt-in:** the evaluate phase runs the app on an iOS Simulator by default via the `device.mjs` helper (light/dark screenshots on iPhone, plus iPad when targeted, and a Dynamic Type spot check), scoring an 8-dimension /40 rubric plus a code checklist (retain cycles, `@MainActor` correctness, state ownership, force unwraps); a connected physical device is an opt-in target via `xcrun devicectl`, using the project's existing signing and a gracefully reduced screenshot matrix
+- **Two project layouts:** Xcode apps (`.xcodeproj`/`.xcworkspace`) gate on `xcodebuild build`/`test` against a resolved simulator destination with `CODE_SIGNING_ALLOWED=NO`; Swift packages (`Package.swift`) gate on `swift build`/`swift test` and skip the simulator half gracefully — SwiftLint/SwiftFormat gates apply when configured, and exact commands can be pinned in `.cache/develop-ios-feature/gates.json`
+- **Autonomous `--auto` mode:** collapses in-flow confirmations into a single review at the PR; every critique persists a snapshot that `critique-plan.mjs` reads, exiting non-zero while P0/P1 findings remain, so the fix loop converges deterministically; still stops for the human gates (PR merge, release publish), and deferred P2/P3 findings surface in the PR body
+- **Phase 0 permissions setup:** `setup.mjs` wires up every required allow entry in `.claude/settings.local.json`, previewing the delta before writing; grants follow least privilege — `simctl` and `devicectl` entries are subcommand-scoped to the boot/install/launch/screenshot lifecycle, and the destructive surface (`simctl erase|delete|create`, `devicectl device reboot|wipe`, `git push`, bare `rm`) is never auto-granted
+- **Cached discovery:** caches the Phase 0 baseline per repo (layout, schemes, file-membership verdict, state idiom, gates) and skips rediscovery on later runs; the green-baseline gate run always repeats on a clean tree
+- **Seven helper scripts:** `setup.mjs`, `discover.mjs`, `gates.mjs`, `device.mjs`, `critique-plan.mjs`, `cache-check.mjs`, `cache-write.mjs` — invoked by project path on the `npx skills` channel and as `dif-*` PATH commands on the `ios-dev` plugin channel
+- **Not an App Store pipeline:** a release is a git tag plus a GitHub release; the skill never archives, signs, uploads to TestFlight, or submits to the App Store
+- **Portable:** project specifics (layout, schemes, state-management idiom, gates, preview conventions) live in the discovery phase, so the same skill works across SwiftUI projects
+
 | Skill | Description | Recommended model |
 |---|---|---|
 | [`commit-message`](skills/commit-message/SKILL.md) | Enforces atomic commits, the 50/72 subject/body rule, and Conventional Commits format | `haiku` |
 | [`create-pr`](skills/create-pr/SKILL.md) | Derives PR title and body from commits, enforces a consistent format, and confirms before submitting | `haiku` |
 | [`develop-go-feature`](skills/develop-go-feature/SKILL.md) | Builds a Go backend feature end-to-end: plan the contract, implement, gate, verify against the OpenAPI doc, fix, PR, release | `opus` |
+| [`develop-ios-feature`](skills/develop-ios-feature/SKILL.md) | Builds a SwiftUI iOS feature end-to-end: shape, build, gate, critique in the iOS Simulator, fix, PR, release | `opus` |
 | [`develop-web-feature`](skills/develop-web-feature/SKILL.md) | Builds a web feature end-to-end with /impeccable: shape, build, gate, audit, critique, fix, PR, release | `opus` |
 | [`postgres-scaffold`](skills/postgres-scaffold/SKILL.md) | Generates goose migration files and optionally GORM model structs for PostgreSQL tables | `sonnet` |
 | [`test-api`](skills/test-api/SKILL.md) | Tests API endpoints against an OpenAPI/Swagger specification | `sonnet` |
@@ -156,19 +186,21 @@ installs the same skill twice under different names.
 
 ### As Claude Code plugins (toolchain bundles)
 
-The repo is a plugin marketplace with three cohesion-grouped plugins:
+The repo is a plugin marketplace with four cohesion-grouped plugins:
 
 | Plugin | Contents |
 |---|---|
 | `git-workflow` | `commit-message` + `create-pr` skills, the PreToolUse hard-gate hooks that enforce them (no manual `settings.json` wiring needed), and the `gwf-setup` permission-setup command |
 | `web-dev` | `develop-web-feature` + `update-readme` skills, plus `dwf-*` helper commands on the PATH |
 | `go-dev` | `develop-go-feature` + `test-api` + `postgres-scaffold` + `update-readme` skills, plus `dgf-*` helper commands on the PATH |
+| `ios-dev` | `develop-ios-feature` + `update-readme` skills, plus `dif-*` helper commands on the PATH |
 
 ```
 /plugin marketplace add pyaethu-aung/skills
 /plugin install git-workflow@pyaethu-aung-skills
 /plugin install web-dev@pyaethu-aung-skills
 /plugin install go-dev@pyaethu-aung-skills
+/plugin install ios-dev@pyaethu-aung-skills
 ```
 
 Plugin skills are namespaced: `/git-workflow:commit-message`,
@@ -177,20 +209,22 @@ bumps. The plugin directories symlink to `skills/` and `.claude/hooks/`, so
 there is a single source of truth; the plugin installer dereferences the
 symlinks at install time.
 
-`develop-web-feature`'s and `develop-go-feature`'s helper scripts work on both
-channels: the `npx skills` install runs them by project path
+The workflow skills' helper scripts work on both channels: the `npx skills`
+install runs them by project path
 (`node .claude/skills/develop-web-feature/scripts/<name>.mjs`, likewise for
-`develop-go-feature`), while the `web-dev` plugin ships `dwf-*` wrapper
-commands (`dwf-setup`, `dwf-gates`, …) and the `go-dev` plugin ships `dgf-*`
-ones (`dgf-setup`, `dgf-gates`, `dgf-server`, …) that join the PATH while the
-plugin is enabled. Each skill's `setup.mjs` detects which channel it is
-running from and writes the matching permission grants and `Skill()` token
-forms, so hands-off runs work unattended on either channel.
+`develop-go-feature` and `develop-ios-feature`), while the `web-dev` plugin
+ships `dwf-*` wrapper commands (`dwf-setup`, `dwf-gates`, …), the `go-dev`
+plugin ships `dgf-*` ones (`dgf-setup`, `dgf-gates`, `dgf-server`, …), and the
+`ios-dev` plugin ships `dif-*` ones (`dif-setup`, `dif-gates`, `dif-device`, …)
+that join the PATH while the plugin is enabled. Each skill's `setup.mjs`
+detects which channel it is running from and writes the matching permission
+grants and `Skill()` token forms, so hands-off runs work unattended on either
+channel.
 
 Each plugin owns its own grants: `dwf-setup` writes only `web-dev`'s entries,
-`dgf-setup` only `go-dev`'s, and `git-workflow` ships its own `gwf-setup`
-(same dry-run / `--write` contract) for its skill tokens and the sentinel
-forms its guard hooks demand.
+`dgf-setup` only `go-dev`'s, `dif-setup` only `ios-dev`'s, and `git-workflow`
+ships its own `gwf-setup` (same dry-run / `--write` contract) for its skill
+tokens and the sentinel forms its guard hooks demand.
 
 ### Individual skills (`npx skills`)
 
@@ -200,6 +234,7 @@ Install a specific skill into your project:
 npx skills add pyaethu-aung/skills --skill commit-message
 npx skills add pyaethu-aung/skills --skill create-pr
 npx skills add pyaethu-aung/skills --skill develop-go-feature
+npx skills add pyaethu-aung/skills --skill develop-ios-feature
 npx skills add pyaethu-aung/skills --skill develop-web-feature
 npx skills add pyaethu-aung/skills --skill postgres-scaffold
 npx skills add pyaethu-aung/skills --skill test-api
@@ -213,6 +248,7 @@ Install globally:
 npx skills add pyaethu-aung/skills --skill commit-message --global
 npx skills add pyaethu-aung/skills --skill create-pr --global
 npx skills add pyaethu-aung/skills --skill develop-go-feature --global
+npx skills add pyaethu-aung/skills --skill develop-ios-feature --global
 npx skills add pyaethu-aung/skills --skill develop-web-feature --global
 npx skills add pyaethu-aung/skills --skill postgres-scaffold --global
 npx skills add pyaethu-aung/skills --skill test-api --global
@@ -261,9 +297,9 @@ Every pull request targeting `main` runs
 - The two manifests must agree on the version
 - A plugin absent from the base ref (its first release) is exempt
 - A skill bundled by more than one plugin gates all of them: editing
-  `update-readme` requires bumping both `web-dev` and `go-dev` in the same PR.
-  This coupling is deliberate — every plugin that ships the skill must
-  re-release for its users to receive the change
+  `update-readme` requires bumping `web-dev`, `go-dev`, and `ios-dev` in the
+  same PR. This coupling is deliberate — every plugin that ships the skill
+  must re-release for its users to receive the change
 
 Without this, a skill edit would silently never reach plugin users, because
 plugin updates are delivered only on a version bump.
