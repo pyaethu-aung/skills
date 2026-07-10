@@ -166,6 +166,11 @@ const REQUIRED = [
   'Bash(plutil -convert json*)',
   // Spec / fixture directory creation. `mkdir -p` is create-only, never destructive.
   'Bash(mkdir -p *)',
+  // The commit flow measures subject lengths with `printf '%s' … | wc -m` on
+  // every commit (each pipe segment is permission-checked separately). Both
+  // are read-only stdout utilities.
+  'Bash(printf:*)',
+  'Bash(wc:*)',
   // Node scripts written to the project cache dir (avoids node -e inline blocks)
   'Bash(node .cache/develop-ios-feature/*)',
   // Deleting the skill's own temp files. Scoped to the gitignored cache dir, so
