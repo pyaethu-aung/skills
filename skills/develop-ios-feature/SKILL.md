@@ -292,8 +292,9 @@ prompt of this shape:
 > the doc files it flags plus CLAUDE.md / AGENTS.md and the lint config, and
 > locate the newest feature comparable to `<feature>`. Return only the terse
 > baseline markdown for the project cache (layout and file-membership
-> verdict, gates, scheme, state idiom, feature pattern, preview/test
-> conventions, enforcement, what is NOT a gate), ready for `cache-write.mjs`.
+> verdict, gates, scheme, state idiom, design-language adoption mode,
+> feature pattern, preview/test conventions, enforcement, what is NOT a
+> gate), ready for `cache-write.mjs`.
 
 Two things stay on the main thread regardless: the green-baseline gate run
 (a live fact the main agent must witness) and `setup.mjs` (permission changes
@@ -322,6 +323,30 @@ lands. The gate run itself is never cached — confirm green on a clean tree
 every time. The "Worked example" below shows the shape of a filled-in
 baseline.
 
+### Design language (decide the adoption mode)
+
+The design language is **Apple's Human Interface Guidelines**; since iOS 26
+the system-wide look is **Liquid Glass**. The project's own stated design
+system wins when it has one — absent that, HIG + Liquid Glass is the
+default. Decide the **adoption mode** once here, from the discovery output
+(deployment target, SDK version, opt-out key — `discover.mjs` reports all
+three and the derived mode), and record it in the cached baseline:
+
+1. **native** — deployment target ≥ iOS 26: use the Liquid Glass APIs
+   directly (`.glassEffect(_:in:)`, `GlassEffectContainer`,
+   `.buttonStyle(.glass)`), no availability gates.
+2. **gated + fallback** — deployment target < 26 but built with the
+   iOS 26+ SDK: adopt Liquid Glass behind `if #available(iOS 26.0, *)`;
+   the fallback branch renders the same layout with `.ultraThinMaterial`
+   (plus a shape background/stroke where the glass carried the silhouette).
+3. **unavailable / opted out** — SDK < 26, or the project sets
+   `UIDesignRequiresCompatibility` in its Info.plist, or it has its own
+   design system: follow the project's existing conventions and do not
+   introduce glass.
+
+The mode is a Phase 0 fact, not a per-view choice: Phase 1 plans against it,
+Phase 2 builds to it, and Phase 4 critiques against it.
+
 ## Phase 1: Shape
 
 Shape the feature before writing code. Produce a short written spec:
@@ -339,7 +364,14 @@ Shape the feature before writing code. Produce a short written spec:
    `accessibilityExtraLarge`?), and minimum 44pt hit targets.
 5. **Preview plan.** Which previews to add — per meaningful state, and worth
    checking in both color schemes.
-6. **Out of scope.** An explicit list, the YAGNI anchor for Phase 2.
+6. **Design-language plan** (per the Phase 0 adoption mode). Which custom
+   surfaces get Liquid Glass — system components get it free, so prefer
+   them and list only the custom chrome (floating controls, badges,
+   overlays) that needs `.glassEffect`; any tint or `.interactive()`
+   choices; and, in gated mode, the exact fallback treatment for older iOS.
+   In unavailable/opted-out mode this item just names the project
+   conventions being followed.
+7. **Out of scope.** An explicit list, the YAGNI anchor for Phase 2.
 
 **Confirm.** Present the spec and wait for confirmation — the cheapest place
 to catch a scope mismatch. In `--auto`, self-check instead: is every state
@@ -368,6 +400,22 @@ testable when it lands:
    after*, in the project's convention (XCUITest target or
    swift-snapshot-testing). A well-written test must fail on the code before
    your change and pass after.
+
+**Build to the Phase 0 design-language mode.** Prefer system components
+first — toolbars, tab bars, buttons, and sheets adopt Liquid Glass
+automatically under the iOS 26 SDK, so custom chrome is the only place the
+APIs appear. When custom chrome is warranted: `.glassEffect(_:in:)` on the
+surface, related glass shapes grouped (and morphed) in one
+`GlassEffectContainer` with `glassEffectID`, `.buttonStyle(.glass)` (or
+`.glassProminent`) for buttons. In **gated + fallback** mode, centralize the
+availability check in one shared adaptive modifier the project owns (e.g. an
+`adaptiveGlass()` ViewModifier: `if #available(iOS 26.0, *)` →
+`.glassEffect(…)`, else `.background(.ultraThinMaterial, in: …)`) instead of
+scattering `#available` checks per view, and pin a `#Preview` to the
+fallback branch so both renderings stay covered. Two hard rules in every
+mode: never rebuild fake glass with blur stacks where the real API exists,
+and never stack glass on glass — legibility over glass is a P1 in the
+critique.
 
 **Register every new file** in `project.pbxproj` when Phase 0 said the
 project lacks filesystem-synchronized groups, and run a build right away — an
@@ -491,9 +539,21 @@ helper fails plainly — critique on the simulator instead).
    4. typography & Dynamic Type
    5. accessibility (labels, traits, contrast, 44pt targets)
    6. state coverage (loading/empty/error actually reachable and correct)
-   7. navigation coherence & platform-idiom (HIG) fit
+   7. navigation coherence & platform-idiom (HIG) fit — including Liquid
+      Glass correctness per the Phase 0 adoption mode: legibility over
+      glass, sane tinting, no glass-on-glass, system components not
+      re-skinned
    8. interaction feedback & motion
-5. When the critique pass is done, stop the app (shuts the simulator down
+5. **Fallback parity (gated + fallback mode only).** The screenshots above
+   show the Liquid Glass branch; the fallback branch ships too, so it gets
+   judged too. When discovery reported an older-iOS-runtime simulator
+   (older than 26), repeat the key screenshots on it —
+   `device.mjs stop`, then `device.mjs start --udid <older-runtime iPhone>`
+   — and critique the fallback rendering with the same rubric; classify
+   findings like any other. When no older runtime is installed, skip and
+   say so in the snapshot (one line under the frontmatter), scoring the
+   fallback from its pinned preview instead.
+6. When the critique pass is done, stop the app (shuts the simulator down
    only if the helper booted it; physical devices are never rebooted):
    ```bash
    node .claude/skills/develop-ios-feature/scripts/device.mjs stop
@@ -768,6 +828,12 @@ for. None of this is portable; yours will differ.
   coverage threshold.
 - **State idiom:** `@Observable` models owned by the screen's root view via
   `@State`, injected downward with `@Environment`.
+- **Design language:** deployment target iOS 17, built with the iOS 26 SDK,
+  no `UIDesignRequiresCompatibility` → **gated + fallback**: Liquid Glass on
+  the feature's floating filter bar via a shared `adaptiveGlass()` modifier
+  (`.glassEffect` on 26+, `.ultraThinMaterial` below), system components
+  left to auto-adopt; fallback screenshots on the installed iOS 18.4
+  runtime.
 - **Feature pattern:** each screen = `Features/<Name>/` holding
   `<Name>View.swift`, `<Name>Model.swift`, `<Name>+Previews.swift`, and a
   matching `<Name>ModelTests.swift`; design tokens in `Style/Tokens.swift`.
