@@ -8,11 +8,20 @@
  *
  *   node …/device.mjs start [--scheme MyApp] [--device "iPhone 16"] [--udid U]
  *                           [--physical] [--configuration Debug] [--timeout 180]
- *   node …/device.mjs screenshot --out <path> [--appearance light|dark]
+ *                           [-- <launch args…>]
+ *   node …/device.mjs screenshot --out <path> [--appearance light|dark] [--settle 2]
  *   node …/device.mjs appearance light|dark
- *   node …/device.mjs relaunch
+ *   node …/device.mjs relaunch [-- <launch args…>]
  *   node …/device.mjs status
  *   node …/device.mjs stop
+ *
+ * Launch arguments: everything after a literal `--` is passed verbatim to
+ * `simctl launch` / `devicectl device process launch`, so app states are
+ * driven through this helper instead of raw simctl chains:
+ *   dif-device relaunch -- -filmStyle "Vivid Slide"
+ * `start` and `relaunch` wait ~2s after launch so the first screenshot does
+ * not catch the splash; `screenshot --settle <sec>` adds an extra wait for
+ * slow-rendering states.
  *
  * `start`      resolves the target (booted iPhone simulator, else the newest
  *              available iPhone; or the physical device), boots it when needed,
@@ -58,9 +67,10 @@ function writeState(state) {
 }
 
 function parseArgs(argv) {
-  const out = { _: [] };
+  const out = { _: [], launchArgs: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
+    if (a === '--') { out.launchArgs = argv.slice(i + 1); break; }
     if (a === '--scheme') out.scheme = argv[++i];
     else if (a === '--device') out.device = argv[++i];
     else if (a === '--udid') out.udid = argv[++i];
@@ -69,6 +79,7 @@ function parseArgs(argv) {
     else if (a === '--timeout') out.timeout = Number(argv[++i]);
     else if (a === '--out') out.out = argv[++i];
     else if (a === '--appearance') out.appearance = argv[++i];
+    else if (a === '--settle') out.settle = Number(argv[++i]);
     else out._.push(a);
   }
   return out;
@@ -250,7 +261,7 @@ function start(opts) {
       return 1;
     }
     run('xcrun', ['simctl', 'terminate', target.udid, bundleId], { timeout: 30000 }); // fresh launch; ignore "not running"
-    const launch = run('xcrun', ['simctl', 'launch', target.udid, bundleId], { timeout: 60000 });
+    const launch = run('xcrun', ['simctl', 'launch', target.udid, bundleId, ...opts.launchArgs], { timeout: 60000 });
     if (launch.status !== 0) {
       console.error(`[device] launch failed: ${(launch.stderr ?? '').trim()}`);
       return 1;
@@ -261,12 +272,13 @@ function start(opts) {
       console.error(`[device] install failed: ${(install.stderr ?? '').trim()}`);
       return 1;
     }
-    const launch = run('xcrun', ['devicectl', 'device', 'process', 'launch', '--device', target.udid || target.identifier, bundleId], { timeout: 120000 });
+    const launch = run('xcrun', ['devicectl', 'device', 'process', 'launch', '--device', target.udid || target.identifier, bundleId, ...opts.launchArgs], { timeout: 120000 });
     if (launch.status !== 0) {
       console.error(`[device] launch failed: ${(launch.stderr ?? '').trim()}`);
       return 1;
     }
   }
+  sleep(2000); // past the splash before the first screenshot
 
   writeState({
     kind: target.kind,
@@ -303,6 +315,7 @@ function screenshot(opts) {
   }
   mkdirSync(dirname(opts.out), { recursive: true });
 
+  if (Number.isFinite(opts.settle) && opts.settle > 0) sleep(opts.settle * 1000);
   if (state.kind === 'simulator') {
     if (opts.appearance) {
       run('xcrun', ['simctl', 'ui', state.udid, 'appearance', opts.appearance], { timeout: 30000 });
@@ -350,25 +363,26 @@ function appearance(opts) {
   return 0;
 }
 
-function relaunch() {
+function relaunch(opts) {
   const state = requireState();
   if (!state) return 1;
   if (state.kind === 'simulator') {
     run('xcrun', ['simctl', 'terminate', state.udid, state.bundleId], { timeout: 30000 });
-    const launch = run('xcrun', ['simctl', 'launch', state.udid, state.bundleId], { timeout: 60000 });
+    const launch = run('xcrun', ['simctl', 'launch', state.udid, state.bundleId, ...opts.launchArgs], { timeout: 60000 });
     if (launch.status !== 0) {
       console.error(`[device] relaunch failed: ${(launch.stderr ?? '').trim()}`);
       return 1;
     }
   } else {
     run('xcrun', ['devicectl', 'device', 'process', 'terminate', '--device', state.udid, state.bundleId], { timeout: 60000 });
-    const launch = run('xcrun', ['devicectl', 'device', 'process', 'launch', '--device', state.udid, state.bundleId], { timeout: 120000 });
+    const launch = run('xcrun', ['devicectl', 'device', 'process', 'launch', '--device', state.udid, state.bundleId, ...opts.launchArgs], { timeout: 120000 });
     if (launch.status !== 0) {
       console.error(`[device] relaunch failed: ${(launch.stderr ?? '').trim()}`);
       return 1;
     }
   }
-  console.log(`[device] relaunched ${state.bundleId}.`);
+  sleep(2000); // past the splash before the first screenshot
+  console.log(`[device] relaunched ${state.bundleId}${opts.launchArgs.length ? ` with args: ${opts.launchArgs.join(' ')}` : ''}.`);
   return 0;
 }
 
@@ -403,10 +417,10 @@ function stop() {
 
 const [, , sub, ...rest] = process.argv;
 const opts = parseArgs(rest);
-const handlers = { start: () => start(opts), screenshot: () => screenshot(opts), appearance: () => appearance(opts), relaunch, status, stop };
+const handlers = { start: () => start(opts), screenshot: () => screenshot(opts), appearance: () => appearance(opts), relaunch: () => relaunch(opts), status, stop };
 
 if (!handlers[sub]) {
-  console.error('Usage: device.mjs <start|screenshot|appearance|relaunch|status|stop> [options]');
+  console.error('Usage: device.mjs <start|screenshot|appearance|relaunch|status|stop> [options] [-- <launch args…>]');
   process.exit(2);
 }
 
