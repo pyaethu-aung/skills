@@ -113,6 +113,46 @@ const resolvedPaths = ['Package.resolved', ...projects.map((p) => join(p, 'proje
 const resolvedBody = resolvedPaths.map(readText).join('\n');
 const hasSnapshotTesting = /swift-snapshot-testing/.test(resolvedBody) || /swift-snapshot-testing/.test(readText('Package.swift'));
 
+// --- Design language: Liquid Glass adoption mode ---
+// HIG is the baseline; Liquid Glass is the system look on iOS 26+. The mode
+// derives from three facts: the minimum deployment target, the SDK the
+// toolchain builds with, and the UIDesignRequiresCompatibility opt-out.
+const sdkVersion = run('xcrun', ['--sdk', 'iphonesimulator', '--show-sdk-version'], 30000);
+const sdkMajor = sdkVersion ? Number(sdkVersion.split('.')[0]) : null;
+
+// Minimum deployment target across pbxproj values and package platforms.
+const targetVersions = [
+  ...(deploymentTarget ? deploymentTarget.split(',').map((v) => Number(v.trim().split('.')[0])) : []),
+  ...((packageInfo?.platforms ?? [])
+    .filter((p) => /^ios\b/i.test(p))
+    .map((p) => Number(p.match(/(\d+)/)?.[1]))),
+].filter(Number.isFinite);
+const minTargetMajor = targetVersions.length ? Math.min(...targetVersions) : null;
+
+// Opt-out: the key in a tracked Info.plist, or its INFOPLIST_KEY_ build
+// setting in the pbxproj.
+let optedOut = /INFOPLIST_KEY_UIDesignRequiresCompatibility\s*=\s*YES/.test(pbxproj);
+if (!optedOut) {
+  try {
+    const plists = execFileSync('git', ['ls-files', '*Info.plist'], { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] })
+      .split('\n').filter(Boolean);
+    optedOut = plists.some((p) => {
+      const body = readText(p);
+      return body.includes('UIDesignRequiresCompatibility') && /UIDesignRequiresCompatibility<\/key>\s*<true\s*\/>/.test(body);
+    });
+  } catch { /* not a git repo */ }
+}
+
+const glassMode = optedOut
+  ? 'opted out — UIDesignRequiresCompatibility is set; follow the project\'s existing conventions, do not introduce glass'
+  : (sdkMajor === null || sdkMajor < 26)
+    ? 'unavailable — the toolchain SDK predates iOS 26; follow the project\'s existing conventions, no glass APIs'
+    : (minTargetMajor !== null && minTargetMajor >= 26)
+      ? 'native — deployment target is iOS 26+; use Liquid Glass APIs directly, no availability gates'
+      : (minTargetMajor !== null)
+        ? 'gated + fallback — deployment target < iOS 26 on an iOS 26+ SDK; adopt Liquid Glass behind `if #available(iOS 26.0, *)` with an .ultraThinMaterial fallback'
+        : 'undetermined — no deployment target found; confirm before choosing glass APIs';
+
 // --- Lint / format config ---
 const swiftlintConfig = ['.swiftlint.yml', '.swiftlint.yaml'].find((p) => existsSync(p));
 const swiftformatConfig = existsSync('.swiftformat') ? '.swiftformat' : null;
@@ -223,6 +263,21 @@ const lines = [
   `- test files: ${testFiles.length || 'unknown (not a git repo?)'}`,
   `- XCUITest (UI tests): ${uiTestFiles.length ? `yes (${uiTestFiles.length} file(s))` : 'not detected'}`,
   `- swift-snapshot-testing: ${hasSnapshotTesting ? 'yes' : 'not detected'}`,
+  '',
+  '### Design language (HIG + Liquid Glass)',
+  `- iOS SDK: ${sdkVersion ?? 'unknown'}`,
+  `- minimum deployment target: ${minTargetMajor !== null ? `iOS ${minTargetMajor}` : 'unknown'}`,
+  `- Liquid Glass adoption mode: ${glassMode}`,
+  ...(glassMode.startsWith('gated')
+    ? [`- older-runtime simulator for fallback-parity screenshots: ${
+        (runtimes ?? []).some((r) => {
+          const major = Number(r.match(/iOS (\d+)/)?.[1]);
+          return Number.isFinite(major) && major < 26;
+        })
+          ? 'available'
+          : 'none installed — score the fallback from its pinned preview'
+      }`]
+    : []),
   '',
   '### Lint / format',
   swiftlintConfig ? `- SwiftLint config: \`${swiftlintConfig}\`` : '- no SwiftLint config; lint gate skipped unless pinned via gates.json',
