@@ -74,6 +74,26 @@ the PR:
   (Phase 7). Report the PR URL and deferred findings, then stop. The user
   will resume Phase 7 manually once the PR is merged.
 
+**Pre-flight is a hard gate — verify permissions are APPLIED before Phase 1.**
+`--auto` removes the skill's own confirmations, not the harness permission
+prompts; a hands-off run whose grants were never written degenerates into a
+prompt storm. Before starting Phase 1 in a hands-off run:
+
+1. `setup.mjs --write` has been applied and a re-run of the dry form
+   **exits 0** (steady state — nothing left to add).
+2. When the git-workflow plugin is installed, `gwf-setup --write` likewise
+   re-runs clean.
+3. The edit path is pre-authorized: `setup.mjs --grant-edits --write`,
+   accept-edits mode, or `bypassPermissions` — otherwise every `Edit`/`Write`
+   prompts mid-loop.
+
+If any of these cannot be satisfied (e.g. the bootstrap grant for
+`setup.mjs` itself is missing, so even the dry run prompts), **stop and
+tell the user exactly what to do** — the one-time
+`"Bash(dif-setup*)"` / `"Bash(gwf-setup*)"` entries for
+`.claude/settings.local.json` and the `--write` commands to run — rather
+than proceeding into a run that prompts on every command.
+
 Autonomous mode removes only the in-flow confirmations. The gates, the fix
 loop, atomic commits, and the disciplines are unchanged.
 
@@ -192,6 +212,10 @@ Add it to `.claude/settings.local.json` once; `setup.mjs` handles everything
 else. Because that grant ends in `*`, it also authorizes the `--write` form,
 so the dry run is a discipline the workflow follows (preview, confirm a
 non-empty delta, then `--write`), not a second approval prompt.
+
+In a hands-off (`--auto`) run this step is a **hard gate**: after `--write`,
+re-run the dry form and require exit 0 before Phase 1 — see the pre-flight
+in Autonomous mode. Do not carry an unapplied grant delta into the loop.
 
 ### Ensure the toolchain
 
@@ -528,7 +552,15 @@ helper fails plainly — critique on the simulator instead).
    images instead.
 3. **Read every screenshot with the Read tool** and walk the feature's real
    flows (launch → navigate to the feature → drive each state the spec
-   named). Navigation and interaction beyond launch arguments/deep links run
+   named). Drive launch-argument states through the helper — everything
+   after `--` passes verbatim to the launch, and `--settle` waits before
+   capturing a slow-rendering state — never through raw
+   `simctl terminate; simctl launch` chains:
+   ```bash
+   node .claude/skills/develop-ios-feature/scripts/device.mjs relaunch -- -filmStyle "Vivid Slide"
+   node .claude/skills/develop-ios-feature/scripts/device.mjs screenshot --settle 2 --out .cache/develop-ios-feature/critique/shots/03-vivid-slide.png
+   ```
+   Navigation and interaction beyond launch arguments/deep links run
    through the project's XCUITest conventions when present; otherwise drive
    what is reachable (deep links, launch arguments, seeded state) and score
    the rest from previews.
@@ -775,10 +807,24 @@ Store; distribution pipelines (fastlane, Xcode Cloud) stay human-run.
   read-only. Use relative paths or run commands as-is.
 - **Manage the app through the run-target helper, not raw simctl/devicectl
   choreography.** Build, launch, screenshot, and stop with
-  `node .claude/skills/develop-ios-feature/scripts/device.mjs start|screenshot|appearance|relaunch|status|stop`.
-  The helper resolves the target, waits for boot, reads the bundle id, and
-  cleans up after itself, so the critique never stalls on a permission
-  prompt.
+  `node .claude/skills/develop-ios-feature/scripts/device.mjs start|screenshot|appearance|relaunch|status|stop`,
+  and drive launch-argument states with the `--` passthrough
+  (`relaunch -- -myFlag value`) plus `screenshot --settle <sec>` for
+  slow-rendering states. The helper resolves the target, waits for boot and
+  past the splash, reads the bundle id, and cleans up after itself, so the
+  critique never stalls on a permission prompt.
+- **Never juggle file versions with `cp` + `git checkout --`.** Experimental
+  variants happen via Edit on the working tree (the diff is the record);
+  when a revert is truly needed, one prompted `git checkout -- <path>` is
+  the deliberate exception, not a loop step. `cp` and destructive git forms
+  are intentionally ungranted.
+- **Never poll with shell loops.** No `until … sleep …` (or `while`/`sleep`)
+  loops watching task files or subagent transcripts — the harness reports
+  background completion on its own; continue when it does.
+- **No `echo` progress markers.** Bare `echo done`, `&& echo ok`, and
+  `; echo ---` separators each trigger a permission check and add nothing —
+  the tool result already carries exit status and output. `echo` is
+  deliberately ungranted.
 - **Never reset or reshape simulators or devices.** No `xcrun simctl
   erase|delete|create|clone|privacy|keychain|spawn`; on physical hardware no
   `devicectl device reboot|uninstall|wipe` and no pairing management. The
