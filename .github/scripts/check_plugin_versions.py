@@ -31,6 +31,11 @@ PLUGIN_PATHS = {
         "skills/postgres-scaffold/",
         "skills/update-readme/",
     ],
+    "ios-dev": [
+        "plugins/ios-dev/",
+        "skills/develop-ios-feature/",
+        "skills/update-readme/",
+    ],
     "react-native-dev": [
         "plugins/react-native-dev/",
         "skills/develop-react-native-feature/",
