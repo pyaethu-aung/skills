@@ -164,12 +164,43 @@ flowchart TD
 - **Not an App Store pipeline:** a release is a git tag plus a GitHub release; the skill never archives, signs, uploads to TestFlight, or submits to the App Store
 - **Portable:** project specifics (layout, schemes, state-management idiom, gates, preview conventions) live in the discovery phase, so the same skill works across SwiftUI projects
 
+### `develop-react-native-feature`
+
+Guides Claude through building a React Native feature end-to-end, from shape to a published release, critiquing the running app on **both** mobile platforms. Requires Node; the iOS half needs macOS with full Xcode, and the Android half (optional — it degrades gracefully) needs the Android SDK with an AVD.
+
+```mermaid
+flowchart TD
+    L["Phase 0: Learn<br/>setup + discover + Expo skills"] --> S["Phase 1: Shape<br/>screens · state · a11y · platform diffs"]
+    S --> B["Phase 2: Build<br/>+ tests"]
+    B --> G["Phase 3: Gate<br/>typecheck · lint · test"]
+    G --> E["Phase 4: Evaluate<br/>simulator + emulator critique + audit"]
+    E -->|P0/P1 findings| F["Phase 5: Fix"]
+    F --> G
+    E -->|clean, score plateaus| C["Phase 6: Commit → Docs → PR"]
+    C --> PR(["PR open (stop here)"])
+    PR -. "human gate: approve + merge" .-> M["Phase 7: Merge feature PR"]
+    M --> Vb["Version bump"]
+    Vb -. "human gate: publish" .-> R["Tag + Release"]
+```
+
+- **Full lifecycle loop:** learn, shape (screens, state ownership, UI states, accessibility plan, per-platform differences), build with tests, gate, evaluate (dual-platform critique + code audit), fix, commit, document, PR — then merge, version, tag, and release — iterating the gate/evaluate → fix cycle until no P0/P1 findings remain
+- **Dual-platform critique with graceful Android degrade:** the evaluate phase runs the app on the iOS Simulator **and** the Android Emulator via the `metro.mjs` + `device.mjs` helpers (light/dark screenshots on each platform, iPad when targeted, pinned status-bar clocks), scoring an 8-dimension /40 rubric — including platform-idiom fit and cross-platform parity — plus a code checklist (hook dependencies, re-render traps, list virtualization, `Platform.select` hygiene, accessibility props); a machine without the Android SDK critiques iOS-only and says so in the snapshot
+- **Three project flavors:** Expo managed (CNG — `npx expo run` builds development builds; Expo Go is never the critique target), Expo prebuild, and bare React Native — the device helper picks `xcodebuild`/Gradle or `expo run` per flavor, and `discover.mjs` reports which one you have
+- **Required Expo skills only:** on Expo projects, Phase 0 installs the required subset of [official Expo skills](https://github.com/expo/skills) — detection-driven (`expo-router` when the dependency is present, `expo-data-fetching` when the feature touches remote data, …), installed per-skill via `npx skills add expo/skills --skill <name>`, never the full catalog; `eas-*` skills are never auto-installed
+- **Autonomous `--auto` mode:** collapses in-flow confirmations into a single review at the PR; every critique persists a snapshot that `critique-plan.mjs` reads, exiting non-zero while P0/P1 findings remain, so the fix loop converges deterministically; still stops for the human gates (PR merge, release publish), and deferred P2/P3 findings surface in the PR body. Permissions are a pre-flight **hard gate**: `drnf-setup --write` (plus `gwf-setup --write` when git-workflow is installed, plus an edit-path choice such as `--grant-edits --write`) must be applied once per project first
+- **Phase 0 permissions setup:** `setup.mjs` wires up every required allow entry in `.claude/settings.local.json`, previewing the delta before writing; grants follow least privilege — `simctl` and `adb` entries are subcommand-scoped to the boot/install/launch/screenshot lifecycle, expo/react-native CLI invocations route through the helper scripts (no standing `npx expo` grant), and the destructive surface (`simctl erase|delete|create`, `adb uninstall|root`, `emulator -wipe-data`, keystores/signing, `git push`, bare `rm`) is never auto-granted
+- **Cached discovery:** caches the Phase 0 baseline per repo (flavor, gates, navigation/state/styling idioms, required Expo skills) and skips rediscovery on later runs; the green-baseline gate run always repeats on a clean tree
+- **Eight helper scripts:** `setup.mjs`, `discover.mjs`, `gates.mjs`, `metro.mjs`, `device.mjs`, `critique-plan.mjs`, `cache-check.mjs`, `cache-write.mjs` — invoked by project path on the `npx skills` channel and as `drnf-*` PATH commands on the `react-native-dev` plugin channel
+- **Not a store pipeline:** a release is a git tag plus a GitHub release; the skill never runs EAS Build/Submit, never uploads to TestFlight or the Play Console, and never touches signing or keystores
+- **Portable:** project specifics (flavor, gates, navigation/state/styling idioms, token locations) live in the discovery phase, so the same skill works across React Native projects
+
 | Skill | Description | Recommended model |
 |---|---|---|
 | [`commit-message`](skills/commit-message/SKILL.md) | Enforces atomic commits, the 50/72 subject/body rule, and Conventional Commits format | `haiku` |
 | [`create-pr`](skills/create-pr/SKILL.md) | Derives PR title and body from commits, enforces a consistent format, and confirms before submitting | `haiku` |
 | [`develop-go-feature`](skills/develop-go-feature/SKILL.md) | Builds a Go backend feature end-to-end: plan the contract, implement, gate, verify against the OpenAPI doc, fix, PR, release | `opus` |
 | [`develop-ios-feature`](skills/develop-ios-feature/SKILL.md) | Builds a SwiftUI iOS feature end-to-end: shape, build, gate, critique in the iOS Simulator, fix, PR, release | `opus` |
+| [`develop-react-native-feature`](skills/develop-react-native-feature/SKILL.md) | Builds a React Native feature end-to-end: shape, build, gate, critique in the iOS Simulator and Android Emulator, fix, PR, release | `opus` |
 | [`develop-web-feature`](skills/develop-web-feature/SKILL.md) | Builds a web feature end-to-end with /impeccable: shape, build, gate, audit, critique, fix, PR, release | `opus` |
 | [`postgres-scaffold`](skills/postgres-scaffold/SKILL.md) | Generates goose migration files and optionally GORM model structs for PostgreSQL tables | `sonnet` |
 | [`test-api`](skills/test-api/SKILL.md) | Tests API endpoints against an OpenAPI/Swagger specification | `sonnet` |
@@ -187,7 +218,7 @@ installs the same skill twice under different names.
 
 ### As Claude Code plugins (toolchain bundles)
 
-The repo is a plugin marketplace with four cohesion-grouped plugins:
+The repo is a plugin marketplace with five cohesion-grouped plugins:
 
 | Plugin | Contents |
 |---|---|
@@ -195,6 +226,7 @@ The repo is a plugin marketplace with four cohesion-grouped plugins:
 | `web-dev` | `develop-web-feature` + `update-readme` skills, plus `dwf-*` helper commands on the PATH |
 | `go-dev` | `develop-go-feature` + `test-api` + `postgres-scaffold` + `update-readme` skills, plus `dgf-*` helper commands on the PATH |
 | `ios-dev` | `develop-ios-feature` + `update-readme` skills, plus `dif-*` helper commands on the PATH |
+| `react-native-dev` | `develop-react-native-feature` + `update-readme` skills, plus `drnf-*` helper commands on the PATH |
 
 ```
 /plugin marketplace add pyaethu-aung/skills
@@ -202,6 +234,7 @@ The repo is a plugin marketplace with four cohesion-grouped plugins:
 /plugin install web-dev@pyaethu-aung-skills
 /plugin install go-dev@pyaethu-aung-skills
 /plugin install ios-dev@pyaethu-aung-skills
+/plugin install react-native-dev@pyaethu-aung-skills
 ```
 
 Plugin skills are namespaced: `/git-workflow:commit-message`,
@@ -213,19 +246,22 @@ symlinks at install time.
 The workflow skills' helper scripts work on both channels: the `npx skills`
 install runs them by project path
 (`node .claude/skills/develop-web-feature/scripts/<name>.mjs`, likewise for
-`develop-go-feature` and `develop-ios-feature`), while the `web-dev` plugin
-ships `dwf-*` wrapper commands (`dwf-setup`, `dwf-gates`, …), the `go-dev`
-plugin ships `dgf-*` ones (`dgf-setup`, `dgf-gates`, `dgf-server`, …), and the
-`ios-dev` plugin ships `dif-*` ones (`dif-setup`, `dif-gates`, `dif-device`, …)
-that join the PATH while the plugin is enabled. Each skill's `setup.mjs`
-detects which channel it is running from and writes the matching permission
-grants and `Skill()` token forms, so hands-off runs work unattended on either
-channel.
+`develop-go-feature`, `develop-ios-feature`, and
+`develop-react-native-feature`), while the `web-dev` plugin ships `dwf-*`
+wrapper commands (`dwf-setup`, `dwf-gates`, …), the `go-dev` plugin ships
+`dgf-*` ones (`dgf-setup`, `dgf-gates`, `dgf-server`, …), the `ios-dev` plugin
+ships `dif-*` ones (`dif-setup`, `dif-gates`, `dif-device`, …), and the
+`react-native-dev` plugin ships `drnf-*` ones (`drnf-setup`, `drnf-gates`,
+`drnf-metro`, `drnf-device`, …) that join the PATH while the plugin is
+enabled. Each skill's `setup.mjs` detects which channel it is running from and
+writes the matching permission grants and `Skill()` token forms, so hands-off
+runs work unattended on either channel.
 
 Each plugin owns its own grants: `dwf-setup` writes only `web-dev`'s entries,
-`dgf-setup` only `go-dev`'s, `dif-setup` only `ios-dev`'s, and `git-workflow`
-ships its own `gwf-setup` (same dry-run / `--write` contract) for its skill
-tokens and the sentinel forms its guard hooks demand.
+`dgf-setup` only `go-dev`'s, `dif-setup` only `ios-dev`'s, `drnf-setup` only
+`react-native-dev`'s, and `git-workflow` ships its own `gwf-setup` (same
+dry-run / `--write` contract) for its skill tokens and the sentinel forms its
+guard hooks demand.
 
 ### Individual skills (`npx skills`)
 
@@ -236,6 +272,7 @@ npx skills add pyaethu-aung/skills --skill commit-message
 npx skills add pyaethu-aung/skills --skill create-pr
 npx skills add pyaethu-aung/skills --skill develop-go-feature
 npx skills add pyaethu-aung/skills --skill develop-ios-feature
+npx skills add pyaethu-aung/skills --skill develop-react-native-feature
 npx skills add pyaethu-aung/skills --skill develop-web-feature
 npx skills add pyaethu-aung/skills --skill postgres-scaffold
 npx skills add pyaethu-aung/skills --skill test-api
@@ -250,6 +287,7 @@ npx skills add pyaethu-aung/skills --skill commit-message --global
 npx skills add pyaethu-aung/skills --skill create-pr --global
 npx skills add pyaethu-aung/skills --skill develop-go-feature --global
 npx skills add pyaethu-aung/skills --skill develop-ios-feature --global
+npx skills add pyaethu-aung/skills --skill develop-react-native-feature --global
 npx skills add pyaethu-aung/skills --skill develop-web-feature --global
 npx skills add pyaethu-aung/skills --skill postgres-scaffold --global
 npx skills add pyaethu-aung/skills --skill test-api --global
@@ -298,9 +336,10 @@ Every pull request targeting `main` runs
 - The two manifests must agree on the version
 - A plugin absent from the base ref (its first release) is exempt
 - A skill bundled by more than one plugin gates all of them: editing
-  `update-readme` requires bumping `web-dev`, `go-dev`, and `ios-dev` in the
-  same PR. This coupling is deliberate — every plugin that ships the skill
-  must re-release for its users to receive the change
+  `update-readme` requires bumping `web-dev`, `go-dev`, `ios-dev`, and
+  `react-native-dev` in the same PR. This coupling is deliberate — every
+  plugin that ships the skill must re-release for its users to receive the
+  change
 
 Without this, a skill edit would silently never reach plugin users, because
 plugin updates are delivered only on a version bump.
