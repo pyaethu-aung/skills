@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# react-native-dev plugin wrapper: runs the develop-react-native-feature helper
+# script from the plugin root, so permission grants can be path-independent
+# (Bash(drnf-cache-write*)).
+exec node "$(dirname "$0")/../skills/develop-react-native-feature/scripts/cache-write.mjs" "$@"
