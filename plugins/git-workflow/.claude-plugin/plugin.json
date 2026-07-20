@@ -1,7 +1,7 @@
 {
   "name": "git-workflow",
   "displayName": "Git Workflow",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Commit and PR discipline in one install: the /commit-message and /create-pr skills plus the PreToolUse hard-gate hooks that enforce them",
   "author": {
     "name": "Pyae Thu Aung"

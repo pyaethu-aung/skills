@@ -9,7 +9,7 @@
       "name": "git-workflow",
       "source": "./plugins/git-workflow",
       "description": "Commit and PR discipline in one install: the /commit-message and /create-pr skills plus the PreToolUse hard-gate hooks that enforce them",
-      "version": "1.0.0"
+      "version": "1.0.1"
     },
     {
       "name": "web-dev",
