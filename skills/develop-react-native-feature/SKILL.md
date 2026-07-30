@@ -2,8 +2,8 @@
 name: develop-react-native-feature
 description: "Develop and ship a React Native feature end-to-end: shape the feature, build components and screens with tests, gate on typecheck/lint/jest, critique the running app in the iOS Simulator AND the Android Emulator in light and dark, fix, open a PR, and release. Supports Expo (managed and prebuild) and bare React Native; Android degrades gracefully when no SDK is installed. Use when asked to add or build a React Native, Expo, or cross-platform mobile feature or screen."
 metadata:
-  version: "1.0.0"
-argument-hint: "[--auto] The feature to build (e.g. 'Workout history screen with weekly chart')"
+  version: "1.1.0"
+argument-hint: "[--auto] [--explore] The feature to build (e.g. 'Workout history screen with weekly chart')"
 allowed-tools: Bash(node*) Bash(npx*) Bash(xcrun*) Bash(xcodebuild*) Bash(xcode-select*) Bash(adb*) Bash(emulator*) Bash(plutil*) Bash(git:*) Bash(gh:*) Bash(grep*) Bash(ls*) Bash(cat*) Read Write Edit Task
 ---
 
@@ -13,13 +13,16 @@ The playbook for taking a React Native feature from idea to release. It is not
 a runnable driver: the "driver" is the sequence of skill invocations and gate
 commands below.
 
-The loop, in one line: **learn → shape → build → gate → evaluate (dual-platform
-critique + code audit) → fix ↻ → commit → docs → PR**, then ship: **merge →
-version bump → tag + release**. The evaluate phase judges the app running in
-the **iOS Simulator and the Android Emulator** — light and dark on each — and
-the gate/evaluate → fix cycle repeats until no P0/P1 findings remain. A machine
-without the Android SDK degrades gracefully: the critique runs iOS-only and
-says so in its snapshot.
+The loop, in one line: **learn → [explore] → shape + spec → build → gate →
+evaluate (dual-platform critique + code audit) → fix ↻ → commit → docs → PR**,
+then ship: **merge → version bump → tag + release**. The evaluate phase judges
+the app running in the **iOS Simulator and the Android Emulator** — light and
+dark on each — and the gate/evaluate → fix cycle repeats until no P0/P1
+findings remain. A machine without the Android SDK degrades gracefully: the
+critique runs iOS-only and says so in its snapshot. A committed spec and a
+cached task checklist persist across the run (see "The spec and the task
+checklist"); the optional `--explore` front brainstorms the feature before
+shaping it.
 
 This skill is portable. The *workflow* and *disciplines* are the same in every
 project; the *specifics* (Expo managed vs prebuild vs bare RN, gate commands,
@@ -100,6 +103,114 @@ than proceeding into a run that prompts on every command.
 
 Autonomous mode removes only the in-flow confirmations. The gates, the fix
 loop, atomic commits, and the disciplines are unchanged.
+
+## Explore mode (brainstorm first)
+
+Some features arrive as a clear spec; others arrive as a rough idea that needs
+thinking through first. `--explore` (or a request that says "brainstorm",
+"explore", or "think through") prepends a **divergent discovery pass** to
+Phase 1, before any shape is committed to:
+
+- Ask the open questions, surface constraints, and lay out two or three
+  candidate approaches with their tradeoffs — not one plan presented as
+  settled.
+- Give a recommendation, but keep the license to conclude **"don't build
+  this" / "build something smaller"**. If exploration ends there, record the
+  decision in the spec (status `rejected`) and stop before Phase 2 — no
+  branch, no code.
+- Converge the discussion into the spec's `## Exploration` section, then flow
+  into the normal Phase 1 shape.
+
+`--explore` is the opposite of `--auto` at the front, but they compose:
+`--explore --auto` means *brainstorm interactively, then hand off the build* —
+the exploration and the spec confirmation stay interactive, and everything
+after runs hands-off per Autonomous mode. Passing neither is today's behavior:
+shape directly from the prompt.
+
+## The spec and the task checklist
+
+Every run produces two persistent artifacts, so a feature survives a single
+session and reads as documentation afterward. They are distinct on purpose:
+the spec is the durable *what/why* (committed), the checklist is the churny
+*where am I* (cached).
+
+### The spec — committed (`docs/specs/<slug>.md`)
+
+The durable record of what is being built and why. Phase 1 writes it; Phase 6
+reconciles it against what shipped. Phase 0 discovers the project's spec home —
+an existing `openspec/`, `specs/`, or `docs/specs/` convention wins; absent
+one, default to `docs/specs/<slug>.md`. Shape:
+
+```markdown
+---
+slug: workout-history
+title: Workout history screen
+status: proposed        # proposed → building → shipped (or rejected)
+branch: feat/workout-history
+created: 2026-07-24
+---
+
+## Summary
+<one user-facing paragraph — the changelog / release-note seed>
+
+## Exploration            # --explore only: alternatives, tradeoffs, why this path
+## Shape                   # the seven Phase 1 items
+## Changes from plan       # filled at Phase 6: intent vs shipped
+```
+
+`## Summary` is deliberately separate from the internal detail: one or two
+user-facing sentences, so Phase 7 can harvest it (and the summaries of any
+other specs new since the last tag) straight into the release notes.
+
+### The task checklist — cached (`.cache/develop-react-native-feature/tasks/<slug>.md`)
+
+The live execution tracker and the **cross-session resume anchor**. Gitignored
+execution state — like the gate logs and critique snapshots it sits beside —
+ticked freely at every commit and phase boundary with no commit noise. Derived
+from the spec at the end of Phase 1, structured by phase:
+
+```markdown
+## Tasks — workout-history
+
+### Build (Phase 2)
+- [ ] Models + services + unit tests
+- [ ] Hooks / state + tests (every UI state)
+- [ ] Components (light / dark, safe-area) + tests
+- [ ] Screen + navigation wiring
+- [ ] Happy-path render / e2e test
+
+### Gate (Phase 3)
+- [ ] Green baseline
+
+### Fix loop (Phase 5)
+- [ ] P0/P1 clear — live signal is `critique-plan.mjs`, not this box
+
+### Ship (Phase 6–7)
+- [ ] Docs reconciled (spec, README, CLAUDE.md)
+- [ ] PR opened
+- [ ] (human) merged
+- [ ] (human) released
+```
+
+Two rules keep it honest:
+
+- **Coarse anchor, not a second source of truth.** It tracks phase/step
+  position only. The fine-grained signals stay authoritative — gate PASS/FAIL,
+  the critique snapshots, and `critique-plan.mjs`'s exit code. The fix section
+  *references* critique-plan rather than mirroring the P0/P1 list, so the two
+  cannot drift.
+- **Trust but verify on resume.** A ticked box is a hint, not proof. A new
+  session reads the checklist for position, then re-confirms against reality
+  (git log, and the green-baseline gate run Phase 0 already requires) before
+  continuing.
+
+### Show progress in the terminal
+
+Whenever a task completes or a phase begins, echo the checklist to the user as
+a short markdown block — completed steps `- [x]`, the active step marked
+`- [ ] … ← now`, the rest `- [ ]` — so the terminal always shows where the run
+is and what remains. It is the same content as the cached file; printing it is
+what makes progress visible without the user opening the file.
 
 ## Phase 0: Set up
 
@@ -271,6 +382,16 @@ cached — the **green baseline**: always re-run the gates once on a clean
 tree, because it is a live fact (dependency or toolchain drift), not a static
 answer. If there is no cache file, proceed with full discovery.
 
+**Check for an in-progress feature (resume).** Look in
+`.cache/develop-react-native-feature/tasks/` for a checklist whose slug
+matches the requested feature. If one exists, this is a **resume**, not a fresh
+start: read it for position (which phase, which step is next), read the
+committed spec at its `branch`/`slug`, and confirm you are on that feature
+branch. Then **verify before continuing** — a ticked box is a hint, not proof:
+re-run the green-baseline gates and glance at `git log` to confirm the checked
+work is actually present. Pick up from the first unchecked step. If no task
+file matches, this is a fresh run.
+
 **Run the discovery script** to get a structured overview of the flavor,
 versions, new-architecture flag, navigation/state/styling idioms, inferred
 gates, test and lint setup, tablet targeting, toolchain availability on both
@@ -315,6 +436,11 @@ fill in the rest. Establish:
   actually runs in CI.
 - **Enforcement:** are commits/PRs routed through skills or hooks? Is direct
   push to the default branch blocked? What is the branch-naming convention?
+- **The spec home:** where committed specs live. An existing `openspec/`,
+  `specs/`, or `docs/specs/` convention wins (slot the Phase 1 spec into it);
+  absent one, default to `docs/specs/<slug>.md`. Note whether the project
+  keeps a `CHANGELOG.md` — if it does, Phase 7 adds the spec summary there
+  rather than only to the GitHub release notes.
 - **What is NOT a gate:** many repos carry a lint backlog that fails on files
   you never touched. Confirm which checks actually block merge so you do not
   chase noise.
@@ -436,7 +562,11 @@ it, Phase 2 builds to it, and Phase 4 critiques against it.
 
 ## Phase 1: Shape
 
-Shape the feature before writing code. Produce a short written spec:
+Shape the feature before writing code. In `--explore`, run the divergent
+discovery pass first (see Explore mode) and capture it in the spec's
+`## Exploration` section; otherwise go straight to the shape. Either way,
+produce the written spec — these seven items are its `## Shape` section, plus
+the one-paragraph `## Summary` that seeds the changelog:
 
 1. **Screens and navigation.** The screens/components the feature adds or
    changes, and where each mounts — a new route file under `app/`
@@ -462,16 +592,32 @@ Shape the feature before writing code. Produce a short written spec:
    (Expo projects).
 7. **Out of scope.** An explicit list, the YAGNI anchor for Phase 2.
 
-**Confirm.** Present the spec and wait for confirmation — the cheapest place
-to catch a scope mismatch. In `--auto`, self-check instead: is every state
-reachable and handled? Is the state ownership minimal (no store where a hook
-would do)? Is the navigation idiomatic for this project? Then proceed.
+**Write the spec file.** Save the spec to the Phase 0 spec home
+(`docs/specs/<slug>.md` by default) with the frontmatter and sections from
+"The spec and the task checklist" — status `proposed`. This is the committed
+record; it is not yet committed here (the branch is created in Phase 2), so it
+lands as the first commit there.
+
+**Generate the task checklist.** Derive
+`.cache/develop-react-native-feature/tasks/<slug>.md` from the spec — the
+build steps for every layer the shape names, plus the gate/fix/ship rows. This
+is the resume anchor for later sessions.
+
+**Confirm.** Present the spec (and, in `--explore`, the alternatives you
+weighed) and wait for confirmation — the cheapest place to catch a scope
+mismatch. In `--auto`, self-check instead: is every state reachable and
+handled? Is the state ownership minimal (no store where a hook would do)? Is
+the navigation idiomatic for this project? Then proceed. The spec and checklist
+are still written in `--auto`; only the confirmation pause is skipped.
 
 ## Phase 2: Build
 
 **Branch first.** Create a feature branch off the default branch
 (`<type>/<slug>`, e.g. `feat/workout-history`) before the first commit;
-never commit to the default branch.
+never commit to the default branch. Then **commit the Phase 1 spec as the
+first commit** on the branch (`docs(spec): add <slug> spec`, via
+`/commit-message`) and flip its status to `building` — so intent is on the
+record before any code, and the later build commits sit under it.
 
 Follow the feature pattern from Phase 0 and build bottom-up so each layer is
 testable when it lands:
@@ -510,8 +656,10 @@ builds are the rule.
 
 **Commit as you go.** When a logical chunk is gate-green (Phase 3), commit it
 through `/commit-message`, one logical change per commit, rather than
-batching at the end. Treat each of the following as its own commit boundary —
-do not bundle them:
+batching at the end. **After each committed chunk, tick its task in the
+checklist and echo the updated checklist to the terminal** (see "Show progress
+in the terminal") so the resume anchor and the user's view stay current. Treat
+each of the following as its own commit boundary — do not bundle them:
 
 - A model (or service) and its tests
 - A hook/store and its tests
@@ -754,6 +902,12 @@ every commit:
    here.
 2. **The docs the change moved, each as its own commit, before the PR.** Skip
    any whose trigger did not fire:
+   - **The spec** (`docs/specs/<slug>.md`) — always: reconcile it with what
+     actually shipped. Fill `## Changes from plan` with any scope cuts or
+     decisions that diverged from Phase 1, confirm `## Summary` still reads
+     true for release notes, flip status to `shipped`, and commit
+     (`docs(spec): reconcile <slug> with shipped`). A spec that no longer
+     matches the code is worse than none.
    - **README** when user-visible behavior or configuration changed — via
      `/update-readme` when installed, else edit README.md directly with the
      same discipline (surgical edits to the affected sections only, never a
@@ -831,7 +985,13 @@ publish is an outward action to confirm before running.
    human gate as step 1). When git tags are the only version record, skip
    the PR.
 3. **Tag and publish the release** on the merged default branch; the tag must
-   match the bumped version:
+   match the bumped version. **Seed the notes from the specs:** gather the
+   `## Summary` paragraph of every `docs/specs/*` spec new since the last tag
+   and lead the release notes with them (pass them via `--notes`, or let
+   `--generate-notes` handle the commit list and prepend the summaries) — this
+   is the user-facing changelog the specs were written to feed. When the
+   project keeps a `CHANGELOG.md` (Phase 0), add the same summaries there in
+   its format, as its own commit, before tagging.
 
    ```bash
    gh release create v<X.Y.Z> --target main --generate-notes
@@ -956,6 +1116,12 @@ for. None of this is portable; yours will differ.
   `expo-data-fetching` (React Query in use) — both installed with
   `npx skills add expo/skills --skill <name>`; nothing else from the
   catalog.
+- **Spec + tasks:** no `openspec/` or `specs/` convention → spec written to
+  `docs/specs/workout-history.md` in Phase 1 and committed first on the
+  branch (`docs(spec): add workout-history spec`); resume checklist at
+  `.cache/develop-react-native-feature/tasks/workout-history.md`, ticked and
+  echoed per commit; the `## Summary` seeds the v1.4.0 release notes at
+  Phase 7.
 - **Critique run (plugin channel):** `drnf-metro start`, `drnf-device start
   --platform ios`, `--platform android`, four baseline screenshots (both
   platforms, light/dark), error state via `relaunch -- -initialRoute
