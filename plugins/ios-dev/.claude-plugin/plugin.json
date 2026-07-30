@@ -1,7 +1,7 @@
 {
   "name": "ios-dev",
   "displayName": "iOS Dev",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "End-to-end SwiftUI iOS feature development: the /develop-ios-feature build-gate-critique workflow driven through the iOS Simulator, plus its /update-readme companion",
   "author": {
     "name": "Pyae Thu Aung"

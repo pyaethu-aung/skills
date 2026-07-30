@@ -27,13 +27,13 @@
       "name": "ios-dev",
       "source": "./plugins/ios-dev",
       "description": "End-to-end SwiftUI iOS feature development: the /develop-ios-feature build-gate-critique workflow driven through the iOS Simulator, plus its /update-readme companion",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     {
       "name": "react-native-dev",
       "source": "./plugins/react-native-dev",
       "description": "End-to-end React Native feature development: the /develop-react-native-feature build-gate-critique workflow driven through the iOS Simulator and Android Emulator, plus its /update-readme companion",
-      "version": "1.0.0"
+      "version": "1.1.0"
     }
   ]
 }
