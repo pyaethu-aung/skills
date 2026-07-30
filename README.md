@@ -140,23 +140,30 @@ Guides Claude through building a SwiftUI iOS feature end-to-end, from shape to a
 
 ```mermaid
 flowchart TD
-    L["Phase 0: Learn<br/>setup + discover"] --> S["Phase 1: Shape<br/>views · state · a11y"]
-    S --> B["Phase 2: Build<br/>+ previews + tests"]
+    L["Phase 0: Learn<br/>setup · discover · resume?"] --> X{"--explore?"}
+    X -->|yes| BR["Brainstorm<br/>alternatives · tradeoffs"]
+    X -->|no| S["Phase 1: Shape + spec<br/>write docs/specs/&lt;slug&gt;.md<br/>+ task checklist"]
+    BR --> S
+    S -. "writes" .-> A[["Spec (committed) +<br/>task checklist (cached)"]]
+    A -. "resume anchor across sessions" .-> L
+    S --> B["Phase 2: Build<br/>spec = 1st commit · tick tasks"]
     B --> G["Phase 3: Gate<br/>build · test · lint"]
     G --> E["Phase 4: Evaluate<br/>simulator critique + audit"]
     E -->|P0/P1 findings| F["Phase 5: Fix"]
     F --> G
-    E -->|clean, score plateaus| C["Phase 6: Commit → Docs → PR"]
+    E -->|clean, score plateaus| C["Phase 6: Reconcile spec → Docs → PR"]
     C --> PR(["PR open (stop here)"])
     PR -. "human gate: approve + merge" .-> M["Phase 7: Merge feature PR"]
     M --> Vb["Version bump"]
-    Vb -. "human gate: publish" .-> R["Tag + Release"]
+    Vb -. "human gate: publish" .-> R["Tag + Release<br/>notes seeded from spec ## Summary"]
 ```
 
 - **Full lifecycle loop:** learn, shape (views, state ownership, UI states, accessibility plan), build with previews and tests, gate, evaluate (simulator critique + code audit), fix, commit, document, PR — then merge, version, tag, and release — iterating the gate/evaluate → fix cycle until no P0/P1 findings remain
 - **Simulator-driven critique, physical device opt-in:** the evaluate phase runs the app on an iOS Simulator by default via the `device.mjs` helper (light/dark screenshots on iPhone, plus iPad when targeted, and a Dynamic Type spot check), scoring an 8-dimension /40 rubric plus a code checklist (retain cycles, `@MainActor` correctness, state ownership, force unwraps); a connected physical device is an opt-in target via `xcrun devicectl`, using the project's existing signing and a gracefully reduced screenshot matrix
 - **Design language — HIG with Liquid Glass:** the project's own design system wins; absent one, the default is Apple's HIG with Liquid Glass on iOS 26+. Phase 0 derives one of three adoption modes from the deployment target, SDK version, and the `UIDesignRequiresCompatibility` opt-out (all reported by `discover.mjs`): native (target ≥ 26), gated + fallback (`.glassEffect` behind `if #available(iOS 26.0, *)` with an `.ultraThinMaterial` fallback centralized in one shared modifier), or unavailable/opted out (no glass introduced). In gated mode the critique also repeats key screenshots on an older-runtime simulator when one is installed, so the fallback rendering is judged too
 - **Two project layouts:** Xcode apps (`.xcodeproj`/`.xcworkspace`) gate on `xcodebuild build`/`test` against a resolved simulator destination with `CODE_SIGNING_ALLOWED=NO`; Swift packages (`Package.swift`) gate on `swift build`/`swift test` and skip the simulator half gracefully — SwiftLint/SwiftFormat gates apply when configured, and exact commands can be pinned in `.cache/develop-ios-feature/gates.json`
+- **`--explore` brainstorm mode:** an opt-in divergent discovery pass that prepends Phase 1 — weighs candidate approaches and tradeoffs, with license to conclude "build something smaller" or not at all — before converging into the shape. Opposite of `--auto` at the front, but they compose (`--explore --auto` = brainstorm interactively, then hand off the build)
+- **Spec + resume checklist:** every run writes a committed spec (`docs/specs/<slug>.md` by default; slots into an existing `openspec/`/`specs/` convention) whose `## Summary` seeds the Phase 7 release notes, plus a cached task checklist (`.cache/develop-ios-feature/tasks/<slug>.md`) that tracks phase/step position, echoes progress to the terminal, and lets a later session resume the feature — verifying against gates and `git log` before trusting a ticked box
 - **Autonomous `--auto` mode:** collapses in-flow confirmations into a single review at the PR; every critique persists a snapshot that `critique-plan.mjs` reads, exiting non-zero while P0/P1 findings remain, so the fix loop converges deterministically; still stops for the human gates (PR merge, release publish), and deferred P2/P3 findings surface in the PR body. Permissions are a pre-flight **hard gate**: `--auto` does not bypass harness permission prompts, so `dif-setup --write` (plus `gwf-setup --write` when git-workflow is installed, plus an edit-path choice such as `--grant-edits --write`) must be applied once per project first — the skill stops with bootstrap instructions rather than run through a prompt storm
 - **Phase 0 permissions setup:** `setup.mjs` wires up every required allow entry in `.claude/settings.local.json`, previewing the delta before writing; grants follow least privilege — `simctl` and `devicectl` entries are subcommand-scoped to the boot/install/launch/screenshot lifecycle, and the destructive surface (`simctl erase|delete|create`, `devicectl device reboot|wipe`, `git push`, bare `rm`) is never auto-granted
 - **Cached discovery:** caches the Phase 0 baseline per repo (layout, schemes, file-membership verdict, state idiom, gates) and skips rediscovery on later runs; the green-baseline gate run always repeats on a clean tree
@@ -170,23 +177,30 @@ Guides Claude through building a React Native feature end-to-end, from shape to 
 
 ```mermaid
 flowchart TD
-    L["Phase 0: Learn<br/>setup + discover + Expo skills"] --> S["Phase 1: Shape<br/>screens · state · a11y · platform diffs"]
-    S --> B["Phase 2: Build<br/>+ tests"]
+    L["Phase 0: Learn<br/>setup · discover · Expo skills · resume?"] --> X{"--explore?"}
+    X -->|yes| BR["Brainstorm<br/>alternatives · tradeoffs"]
+    X -->|no| S["Phase 1: Shape + spec<br/>write docs/specs/&lt;slug&gt;.md<br/>+ task checklist"]
+    BR --> S
+    S -. "writes" .-> A[["Spec (committed) +<br/>task checklist (cached)"]]
+    A -. "resume anchor across sessions" .-> L
+    S --> B["Phase 2: Build<br/>spec = 1st commit · tick tasks"]
     B --> G["Phase 3: Gate<br/>typecheck · lint · test"]
     G --> E["Phase 4: Evaluate<br/>simulator + emulator critique + audit"]
     E -->|P0/P1 findings| F["Phase 5: Fix"]
     F --> G
-    E -->|clean, score plateaus| C["Phase 6: Commit → Docs → PR"]
+    E -->|clean, score plateaus| C["Phase 6: Reconcile spec → Docs → PR"]
     C --> PR(["PR open (stop here)"])
     PR -. "human gate: approve + merge" .-> M["Phase 7: Merge feature PR"]
     M --> Vb["Version bump"]
-    Vb -. "human gate: publish" .-> R["Tag + Release"]
+    Vb -. "human gate: publish" .-> R["Tag + Release<br/>notes seeded from spec ## Summary"]
 ```
 
 - **Full lifecycle loop:** learn, shape (screens, state ownership, UI states, accessibility plan, per-platform differences), build with tests, gate, evaluate (dual-platform critique + code audit), fix, commit, document, PR — then merge, version, tag, and release — iterating the gate/evaluate → fix cycle until no P0/P1 findings remain
 - **Dual-platform critique with graceful Android degrade:** the evaluate phase runs the app on the iOS Simulator **and** the Android Emulator via the `metro.mjs` + `device.mjs` helpers (light/dark screenshots on each platform, iPad when targeted, pinned status-bar clocks), scoring an 8-dimension /40 rubric — including platform-idiom fit and cross-platform parity — plus a code checklist (hook dependencies, re-render traps, list virtualization, `Platform.select` hygiene, accessibility props); a machine without the Android SDK critiques iOS-only and says so in the snapshot
 - **Three project flavors:** Expo managed (CNG — `npx expo run` builds development builds; Expo Go is never the critique target), Expo prebuild, and bare React Native — the device helper picks `xcodebuild`/Gradle or `expo run` per flavor, and `discover.mjs` reports which one you have
 - **Required Expo skills only:** on Expo projects, Phase 0 installs the required subset of [official Expo skills](https://github.com/expo/skills) — detection-driven (`expo-router` when the dependency is present, `expo-data-fetching` when the feature touches remote data, …), installed per-skill via `npx skills add expo/skills --skill <name>`, never the full catalog; `eas-*` skills are never auto-installed
+- **`--explore` brainstorm mode:** an opt-in divergent discovery pass that prepends Phase 1 — weighs candidate approaches and tradeoffs, with license to conclude "build something smaller" or not at all — before converging into the shape. Opposite of `--auto` at the front, but they compose (`--explore --auto` = brainstorm interactively, then hand off the build)
+- **Spec + resume checklist:** every run writes a committed spec (`docs/specs/<slug>.md` by default; slots into an existing `openspec/`/`specs/` convention) whose `## Summary` seeds the Phase 7 release notes, plus a cached task checklist (`.cache/develop-react-native-feature/tasks/<slug>.md`) that tracks phase/step position, echoes progress to the terminal, and lets a later session resume the feature — verifying against gates and `git log` before trusting a ticked box
 - **Autonomous `--auto` mode:** collapses in-flow confirmations into a single review at the PR; every critique persists a snapshot that `critique-plan.mjs` reads, exiting non-zero while P0/P1 findings remain, so the fix loop converges deterministically; still stops for the human gates (PR merge, release publish), and deferred P2/P3 findings surface in the PR body. Permissions are a pre-flight **hard gate**: `drnf-setup --write` (plus `gwf-setup --write` when git-workflow is installed, plus an edit-path choice such as `--grant-edits --write`) must be applied once per project first
 - **Phase 0 permissions setup:** `setup.mjs` wires up every required allow entry in `.claude/settings.local.json`, previewing the delta before writing; grants follow least privilege — `simctl` and `adb` entries are subcommand-scoped to the boot/install/launch/screenshot lifecycle, expo/react-native CLI invocations route through the helper scripts (no standing `npx expo` grant), and the destructive surface (`simctl erase|delete|create`, `adb uninstall|root`, `emulator -wipe-data`, keystores/signing, `git push`, bare `rm`) is never auto-granted
 - **Cached discovery:** caches the Phase 0 baseline per repo (flavor, gates, navigation/state/styling idioms, required Expo skills) and skips rediscovery on later runs; the green-baseline gate run always repeats on a clean tree
