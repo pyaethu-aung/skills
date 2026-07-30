@@ -1,7 +1,7 @@
 {
   "name": "react-native-dev",
   "displayName": "React Native Dev",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "End-to-end React Native feature development: the /develop-react-native-feature build-gate-critique workflow driven through the iOS Simulator and Android Emulator, plus its /update-readme companion",
   "author": {
     "name": "Pyae Thu Aung"
